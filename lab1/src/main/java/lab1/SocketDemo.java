@@ -23,7 +23,9 @@ public class SocketDemo {
         try (Socket socket = new Socket(host, 80)) {
             socket.getOutputStream().write((
                     "GET " + resource + " HTTP/1.1\n" +
-                            "Host: " + host + ":80\n\n"
+                            "Host: " + host + ":80\n" +
+                            "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) " +
+                            "AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.2 Safari/605.1.15\n\n"
             ).getBytes());
             
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
