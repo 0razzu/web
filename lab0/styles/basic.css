@@ -1,0 +1,60 @@
+body {
+	margin: 0;
+    padding: 0 1rem;
+    font-family: sans-serif, arial;
+    font-weight: 400;
+    background-color: #fafafa;
+    color: #212121;
+}
+
+header {
+	display: flex;
+    align-items: center;
+    margin: 0 -1rem 2rem;
+    padding: 0 1rem;
+    background: linear-gradient(#e53935, #b71c1c);
+}
+
+header h1 {
+	margin: 1rem 15vw 1rem 0;
+    white-space: nowrap;
+    color: #fff;
+}
+
+header input, header button {
+	white-space: nowrap;
+	background-color: #fafafa;
+	border-radius: 1rem;
+	border: .1rem solid #d0d0d0;
+	padding: .15rem 1rem;
+}
+
+header input {
+	font-size: 1.5rem;
+	margin-right: 2rem;
+}
+
+header button {
+	font-size: 1rem;
+}
+
+main {
+	display: flex;
+}
+
+#cat img {
+	height: 50vh;
+	margin-right: 5rem;
+}
+
+.temperature {
+    font-size: 3rem;
+}
+
+.brief, .error {
+    font-size: 2rem;
+}
+
+.wind {
+    font-size: 1.5rem;
+}
