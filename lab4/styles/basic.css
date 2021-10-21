@@ -1,0 +1,253 @@
+:root {
+    --white: #ffffff;
+    --white-thistle: #fcfafd;
+    --white-smoke: #f0f0f0;
+    --light-light-blue: #e9ecf0;
+    --light-light-blue-but-gray: #d5d9dd;
+    --gainsborough: #dcdcdc;
+    --yellow: #ffff00;
+    --green: #00ff00;
+    --red: #ff0000;
+    --light-telegray: #d0d0d0;
+    --smoke: #888888;
+    --curb: #555555;
+    --midnight-blue: #112a46;
+    --black: #000000;
+}
+
+body {
+    margin: 0;
+    padding: 0 1rem;
+    font-family: sans-serif, arial;
+    font-weight: 400;
+    background: var(--light-light-blue);
+}
+
+header {
+    position: sticky;
+    top: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 -1rem 2rem;
+    box-shadow: 0 0 .75rem var(--light-telegray);
+    background: var(--midnight-blue);
+}
+
+header a {
+    text-decoration: none;
+}
+
+header h1 {
+    margin: 1rem 0;
+    font-size: 2rem;
+    white-space: nowrap;
+    color: var(--light-light-blue-but-gray);
+}
+
+nav {
+    position: fixed;
+    width: 15%;
+    min-width: 9rem;
+    height: calc(100vh - 10rem);
+    font-weight: 400;
+    background: var(--white);
+    padding: 1rem 0;
+}
+
+nav div {
+    background-color: #000;
+}
+
+nav a {
+    display: block;
+    margin: 0;
+    padding: 1.6rem 2rem;
+    text-decoration: none;
+    background-color: var(--white);
+}
+
+nav a:hover {
+    opacity: .974;
+}
+
+.current-page-link {
+    background-color: var(--white-smoke);
+    padding-left: 1.8rem;
+    border-left: .2rem solid var(--curb);
+}
+
+main {
+    min-height: 75vh;
+    margin-top: 0;
+    margin-bottom: 2rem;
+    padding: 2rem;
+    background: var(--white);
+}
+
+main, footer {
+    max-width: 85%;
+    margin-left: calc(15% + 2rem);
+    margin-right: .5rem;
+}
+
+h2, h3, h4, th {
+    color: var(--midnight-blue);
+}
+
+h2 {
+    margin: 0 0 1.5rem;
+}
+
+h3 {
+    margin: 2rem 0;
+}
+
+h4 {
+    margin: 2rem 0 .5rem;
+}
+
+p, ul, ol, li {
+    margin: 0 0 1rem;
+}
+
+ul, ul {
+    padding-left: 2.5rem;
+}
+
+li ul, li ol {
+    margin-top: 1rem;
+}
+
+a {
+    color: var(--black);
+}
+
+.text-field {
+    border: .05rem solid var(--light-telegray);
+    background: var(--white-smoke);
+    margin:  0 0 1rem;
+    padding: 1rem 1rem 0;
+    width: fit-content;
+}
+
+.text-field ul, .text-field ol {
+    padding-left: 1.4rem;
+}
+
+table {
+    border-collapse: collapse;
+    border: .1rem solid var(--light-telegray);
+}
+
+th, td {
+    padding: 1rem;
+}
+
+th {
+    border: .1rem solid var(--light-telegray);
+    background: var(--gainsborough);
+    text-align: center;
+}
+
+td {
+    border: .05rem solid var(--light-telegray);
+}
+
+.board {
+    border-collapse: collapse;
+    box-shadow: .15rem .15rem 0.75rem var(--light-telegray);
+    border: none;
+    margin-left: 5rem;
+}
+
+.board th, .board td {
+    height: calc(min(7vh, 7vw));
+    width: calc(min(7vh, 7vw));
+    padding: 0;
+    background: unset;
+    text-align: center;
+    border: none;
+}
+
+.board tr:nth-child(even) td:nth-child(odd),
+.board tr:nth-child(odd) td:nth-child(even) {
+    background: var(--smoke);
+}
+
+.board tr:nth-child(even) td:nth-child(even),
+.board tr:nth-child(odd) td:nth-child(odd) {
+    background: var(--white-smoke);
+}
+
+.board tr td:nth-child(2) {
+    border-left: .1rem solid var(--light-telegray);
+}
+
+.board tr td:nth-child(9) {
+    border-right: .1rem solid var(--light-telegray);
+}
+
+.board tr:nth-child(2) td {
+    border-top: .1rem solid var(--light-telegray);
+}
+
+.board tr:nth-child(9) td {
+    border-bottom: .1rem solid var(--light-telegray);
+}
+
+.board .prompt {
+    background: var(--yellow) !important;
+}
+
+.board .can-be-filled {
+    background: var(--green) !important;
+}
+
+.board .must-be-filled {
+    background: var(--red) !important;
+}
+
+.board img {
+    height: 75%;
+    width: 75%;
+    vertical-align: middle;
+}
+
+.game-page-content {
+    display: flex;
+    justify-content: stretch;
+    flex-wrap: wrap;
+    margin-left: -5rem;
+}
+
+.game-history {
+    height: 70vh;
+    overflow-y: auto;
+    flex-grow: 1;
+    margin-left: 5rem;
+}
+
+.game-history h3 {
+    margin-left: 2.5rem;
+}
+
+footer {
+    display: flex;
+    justify-content: flex-end;
+    background: var(--white-thistle);
+    margin-bottom: 2rem;
+    padding: 2rem;
+}
+
+footer section {
+    margin: 0 5rem;
+}
+
+footer p, footer a {
+    color: var(--curb);
+}
+
+footer p:last-child {
+    margin-bottom: 0;
+}
