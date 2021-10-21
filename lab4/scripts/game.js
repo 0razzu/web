@@ -1,6 +1,7 @@
 const BOARD_SIZE = 8
 const BOARD = Array.from(Array(BOARD_SIZE), () => Array(BOARD_SIZE))
-let BOARD_VIEW = []
+let BOARD_VIEW
+let promptMode = false
 
 const CELL_STATE = {
     DEFAULT: 0,
@@ -27,15 +28,18 @@ const CHECKER_PIC = {
 }
 
 
+const isPlayCell = (row, col) => (row + col) % 2 === 0
+
+
 const place = (type, row, col) => {
-    BOARD[row][col] = type
+    BOARD[row][col].checker = {type: type}
 
     BOARD_VIEW[row][col].innerHTML = '<img src="' + CHECKER_PIC[type] + '">'
 }
 
 
 const clear = (row, col) => {
-    BOARD[row][col] = null
+    BOARD[row][col].checker = null
 
     BOARD_VIEW[row][col].innerHTML = ''
 }
@@ -49,33 +53,63 @@ const move = (rowFrom, colFrom, rowTo, colTo) => {
 }
 
 
-const renderBoard = () => {
-    for (let i = 0; i < BOARD_SIZE; i++)
-        for (let j = 0; j < BOARD_SIZE; j++) {
-            let state = BOARD[i][j].state
+const renderCell = (row, col) => {
+    let state = BOARD[row][col].state
 
-            if (state === CELL_STATE.DEFAULT)
-                BOARD_VIEW[i][j].removeAttribute('class')
-            else
-                BOARD_VIEW[i][j].className = CELL_STATE_CLASS[state]
-        }
+    if (state === CELL_STATE.DEFAULT)
+        BOARD_VIEW[row][col].removeAttribute('class')
+    else
+        BOARD_VIEW[row][col].className = CELL_STATE_CLASS[state]
+}
+
+
+const renderBoard = () => {
+    for (let row = 0; row < BOARD_SIZE; row++)
+        for (let col = 0; col < BOARD_SIZE; col++)
+            renderCell(row, col)
+}
+
+
+const cellOnClick = (row, col) => {
+    let state = BOARD[row][col].state
+
+    if (promptMode && state === CELL_STATE.PROMPT) {
+        promptMode = false
+        BOARD[row][col].state = CELL_STATE.DEFAULT
+    }
+
+    else if (!promptMode && state === CELL_STATE.DEFAULT) {
+        promptMode = true
+        BOARD[row][col].state = CELL_STATE.PROMPT
+    }
+
+    renderCell(row, col)
 }
 
 
 const init = () => {
-    for (let i = 0; i < BOARD_SIZE; i++)
-        for (let j = 0; j < BOARD_SIZE; j++)
-            BOARD[i][j] = {state: CELL_STATE.DEFAULT}
+    for (let row = 0; row < BOARD_SIZE; row++)
+        for (let col = 0; col < BOARD_SIZE; col++)
+            if (isPlayCell(row, col))
+                BOARD[row][col] = {state: CELL_STATE.DEFAULT}
+
+    let col = 0
 
     BOARD_VIEW = Array.from(document.querySelectorAll('.board tr td'))
-        .reduce((arr, cell, i) => {
-            const row = Math.floor(i / BOARD_SIZE)
+        .reduce((arr, cell, index) => {
+            const row = BOARD_SIZE - 1 - Math.floor(index / BOARD_SIZE)
 
             arr[row] = arr[row] || []
-            arr[row].push(cell)
+            arr[row].push(isPlayCell(row, col)? cell : null)
+
+            col = (++col) % BOARD_SIZE
 
             return arr
         }, Array(BOARD_SIZE))
+
+    for (let row = 0; row < BOARD_SIZE; row++)
+        for (let col = 0; col < BOARD_SIZE; col++)
+            BOARD_VIEW[row][col]?.addEventListener('click', () => cellOnClick(row, col))
 }
 
 
