@@ -31,10 +31,18 @@ const CHECKER_PIC = {
 const isPlayCell = (row, col) => (row + col) % 2 === 0
 
 
+const renderChecker = (row, col) => {
+    const checker = BOARD[row][col].checker
+
+    if (checker)
+        BOARD_VIEW[row][col].innerHTML = '<img src="' + CHECKER_PIC[checker.type] + '">'
+}
+
+
 const place = (type, row, col) => {
     BOARD[row][col].checker = {type: type}
 
-    BOARD_VIEW[row][col].innerHTML = '<img src="' + CHECKER_PIC[type] + '">'
+    renderChecker(row, col)
 }
 
 
@@ -54,12 +62,17 @@ const move = (rowFrom, colFrom, rowTo, colTo) => {
 
 
 const renderCell = (row, col) => {
+    if (!isPlayCell(row, col))
+        return
+
     let state = BOARD[row][col].state
 
     if (state === CELL_STATE.DEFAULT)
         BOARD_VIEW[row][col].removeAttribute('class')
     else
         BOARD_VIEW[row][col].className = CELL_STATE_CLASS[state]
+
+    renderChecker(row, col)
 }
 
 
@@ -84,6 +97,19 @@ const cellOnClick = (row, col) => {
     }
 
     renderCell(row, col)
+}
+
+
+const startArrangement = () => {
+    for (let row = 0; row < 3; row++)
+        for (let col = 0; col < BOARD_SIZE; col++)
+            if (isPlayCell(row, col))
+                BOARD[row][col].checker = {type: CHECKER_TYPE.WHITE}
+
+    for (let row = 5; row < BOARD_SIZE; row++)
+        for (let col = 0; col < BOARD_SIZE; col++)
+            if (isPlayCell(row, col))
+                BOARD[row][col].checker = {type: CHECKER_TYPE.BLACK}
 }
 
 
