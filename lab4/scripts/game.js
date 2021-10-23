@@ -31,12 +31,10 @@ const CHECKER_PIC = {
 const isPlayCell = (row, col) => (row + col) % 2 === 0
 
 
-const renderChecker = (row, col) => {
-    const checker = BOARD[row][col].checker
+const hasChecker = (row, col) => BOARD[row][col].checker != null
 
-    if (checker)
-        BOARD_VIEW[row][col].innerHTML = '<img src="' + CHECKER_PIC[checker.type] + '">'
-}
+
+const renderChecker = (row, col) => BOARD_VIEW[row][col].innerHTML = '<img src="' + CHECKER_PIC[BOARD[row][col].checker.type] + '">'
 
 
 const place = (type, row, col) => {
@@ -54,7 +52,7 @@ const clear = (row, col) => {
 
 
 const move = (rowFrom, colFrom, rowTo, colTo) => {
-    const type = BOARD[rowFrom][colFrom]
+    const type = BOARD[rowFrom][colFrom].type
 
     clear(rowFrom, colFrom)
     place(type, rowTo, colTo)
@@ -65,14 +63,15 @@ const renderCell = (row, col) => {
     if (!isPlayCell(row, col))
         return
 
-    let state = BOARD[row][col].state
+    const state = BOARD[row][col].state
 
     if (state === CELL_STATE.DEFAULT)
         BOARD_VIEW[row][col].removeAttribute('class')
     else
         BOARD_VIEW[row][col].className = CELL_STATE_CLASS[state]
 
-    renderChecker(row, col)
+    if (hasChecker(row, col))
+        renderChecker(row, col)
 }
 
 
@@ -84,7 +83,7 @@ const renderBoard = () => {
 
 
 const cellOnClick = (row, col) => {
-    let state = BOARD[row][col].state
+    const state = BOARD[row][col].state
 
     if (promptMode && state === CELL_STATE.PROMPT) {
         promptMode = false
@@ -110,6 +109,19 @@ const startArrangement = () => {
         for (let col = 0; col < BOARD_SIZE; col++)
             if (isPlayCell(row, col))
                 BOARD[row][col].checker = {type: CHECKER_TYPE.BLACK}
+}
+
+
+const example1Arrangement = () => {
+    BOARD[3][5].checker = {type: CHECKER_TYPE.WHITE}
+    BOARD[3][7].checker = {type: CHECKER_TYPE.WHITE}
+
+    BOARD[7][1].checker = {type: CHECKER_TYPE.BLACK}
+    BOARD[0][2].checker = {type: CHECKER_TYPE.BLACK_KING}
+    BOARD[4][2].checker = {type: CHECKER_TYPE.BLACK}
+    BOARD[6][2].checker = {type: CHECKER_TYPE.BLACK}
+    BOARD[6][4].checker = {type: CHECKER_TYPE.BLACK}
+    BOARD[5][7].checker = {type: CHECKER_TYPE.BLACK}
 }
 
 
