@@ -221,6 +221,27 @@ td {
     margin-left: -5rem;
 }
 
+.status-and-buttons {
+    margin-left: 5rem;
+}
+
+.status-and-buttons .buttons {
+    display: flex;
+    flex-flow: column;
+}
+
+button {
+    font-size: 1rem;
+    padding: .5rem;
+    background: var(--white-smoke);
+    border: .1rem solid var(--light-telegray);
+}
+
+button:active {
+    color: unset;
+    background: var(--gainsborough);
+}
+
 .game-history {
     height: 70vh;
     overflow-y: auto;

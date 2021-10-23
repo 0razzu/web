@@ -2,6 +2,7 @@ const BOARD_SIZE = 8
 const BOARD = Array.from(Array(BOARD_SIZE), () => Array(BOARD_SIZE))
 let BOARD_VIEW
 let promptMode = false
+let whoseTurn = 'w'
 
 const CELL_STATE = {
     DEFAULT: 0,
@@ -26,6 +27,11 @@ const CHECKER_PIC = {
     [CHECKER_TYPE.WHITE]: '../img/white-checker.svg',
     [CHECKER_TYPE.WHITE_KING]: '../img/white-checker-king.svg'
 }
+
+const statusStr = document.getElementById('status')
+const startButton = document.getElementById('start')
+const example1button = document.getElementById('example1')
+const finishTurnButton = document.getElementById('finish-turn')
 
 
 const isPlayCell = (row, col) => (row + col) % 2 === 0
@@ -82,6 +88,19 @@ const renderBoard = () => {
     for (let row = 0; row < BOARD_SIZE; row++)
         for (let col = 0; col < BOARD_SIZE; col++)
             renderCell(row, col)
+}
+
+
+const turn = () => {
+    if (whoseTurn === 'w') {
+        whoseTurn = 'b'
+        statusStr.innerText = 'Ходят чёрные'
+    }
+
+    else {
+        whoseTurn = 'w'
+        statusStr.innerText = 'Ходят белые'
+    }
 }
 
 
@@ -164,6 +183,16 @@ const init = () => {
     for (let row = 0; row < BOARD_SIZE; row++)
         for (let col = 0; col < BOARD_SIZE; col++)
             BOARD_VIEW[row][col]?.addEventListener('click', () => cellOnClick(row, col))
+
+    startButton.addEventListener('click', () => {
+        startArrangement()
+        renderBoard()
+    })
+    example1button.addEventListener('click', () => {
+        example1Arrangement()
+        renderBoard()
+    })
+    finishTurnButton.addEventListener('click', () => turn())
 }
 
 
