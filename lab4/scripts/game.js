@@ -34,7 +34,11 @@ const isPlayCell = (row, col) => (row + col) % 2 === 0
 const hasChecker = (row, col) => BOARD[row][col].checker != null
 
 
-const renderChecker = (row, col) => BOARD_VIEW[row][col].innerHTML = '<img src="' + CHECKER_PIC[BOARD[row][col].checker.type] + '">'
+const renderChecker = (row, col) => {
+    const checker = BOARD[row][col].checker
+
+    BOARD_VIEW[row][col].innerHTML = checker === null? '' : '<img src="' + CHECKER_PIC[checker.type] + '">'
+}
 
 
 const place = (type, row, col) => {
@@ -70,8 +74,7 @@ const renderCell = (row, col) => {
     else
         BOARD_VIEW[row][col].className = CELL_STATE_CLASS[state]
 
-    if (hasChecker(row, col))
-        renderChecker(row, col)
+    renderChecker(row, col)
 }
 
 
@@ -83,6 +86,9 @@ const renderBoard = () => {
 
 
 const cellOnClick = (row, col) => {
+    if (!hasChecker(row, col))
+        return
+
     const state = BOARD[row][col].state
 
     if (promptMode && state === CELL_STATE.PROMPT) {
@@ -105,6 +111,11 @@ const startArrangement = () => {
             if (isPlayCell(row, col))
                 BOARD[row][col].checker = {type: CHECKER_TYPE.WHITE}
 
+    for (let row = 3; row < 5; row++)
+        for (let col = 0; col < BOARD_SIZE; col++)
+            if (isPlayCell(row, col))
+                BOARD[row][col].checker = null
+
     for (let row = 5; row < BOARD_SIZE; row++)
         for (let col = 0; col < BOARD_SIZE; col++)
             if (isPlayCell(row, col))
@@ -113,6 +124,11 @@ const startArrangement = () => {
 
 
 const example1Arrangement = () => {
+    for (let row = 0; row < BOARD_SIZE; row++)
+        for (let col = 0; col < BOARD_SIZE; col++)
+            if (isPlayCell(row, col))
+                BOARD[row][col].checker = null
+
     BOARD[3][5].checker = {type: CHECKER_TYPE.WHITE}
     BOARD[3][7].checker = {type: CHECKER_TYPE.WHITE}
 
