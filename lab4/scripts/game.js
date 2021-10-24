@@ -1,6 +1,7 @@
 const BOARD_SIZE = 8
 const BOARD = Array.from(Array(BOARD_SIZE), () => Array(BOARD_SIZE))
 let BOARD_VIEW
+let SITUATION = new Map()
 let promptMode = false
 let whoseTurn = 'w'
 
@@ -27,6 +28,12 @@ const CHECKER_PIC = {
     [CHECKER_TYPE.WHITE]: '../img/white-checker.svg',
     [CHECKER_TYPE.WHITE_KING]: '../img/white-checker-king.svg'
 }
+const CHECKER_COLOR = {
+    [CHECKER_TYPE.BLACK]: 'b',
+    [CHECKER_TYPE.BLACK_KING]: 'b',
+    [CHECKER_TYPE.WHITE]: 'w',
+    [CHECKER_TYPE.WHITE_KING]: 'w'
+}
 
 const statusStr = document.getElementById('status')
 const startButton = document.getElementById('start')
@@ -37,7 +44,7 @@ const finishTurnButton = document.getElementById('finish-turn')
 const isPlayCell = (row, col) => (row + col) % 2 === 0
 
 
-const hasChecker = (row, col) => BOARD[row][col].checker != null
+const hasChecker = (row, col) => BOARD[row][col]?.checker != null
 
 
 const renderChecker = (row, col) => {
@@ -101,26 +108,165 @@ const turn = () => {
         whoseTurn = 'w'
         statusStr.innerText = 'Ходят белые'
     }
+
+    calculateSituation()
 }
 
 
-const cellOnClick = (row, col) => {
+const isWhite = (row, col) => {
+    const type = BOARD[row][col]?.checker?.type
+
+    return type == CHECKER_TYPE.WHITE || type == CHECKER_TYPE.WHITE_KING
+}
+
+
+const isBlack = (row, col) => {
+    const type = BOARD[row][col]?.checker?.type
+
+    return type === CHECKER_TYPE.BLACK || type === CHECKER_TYPE.BLACK_KING
+}
+
+
+const isTurnOf = (row, col) => {
     if (!hasChecker(row, col))
-        return
+        return false
+
+    const type = BOARD[row][col].checker.type
+
+    return (whoseTurn === 'w' && (type === CHECKER_TYPE.WHITE || type === CHECKER_TYPE.WHITE_KING)) ||
+        (whoseTurn === 'b' && (type === CHECKER_TYPE.BLACK || type === CHECKER_TYPE.BLACK_KING))
+}
+
+
+const addSituation = (rowFrom, colFrom, rowTo, colTo, state) => {
+    const cellFrom = BOARD[rowFrom][colFrom]
+    let cellsTo = SITUATION.get(cellFrom)
+    const newCell = {row: rowTo, col: colTo, state: state}
+
+    if (cellsTo == null) {
+        cellsTo = [newCell]
+        SITUATION.set(cellFrom, cellsTo)
+    }
+
+    else
+        cellsTo.push(newCell)
+}
+
+
+const areFoes = (row1, col1, row2, col2) => {
+    const color1 = CHECKER_COLOR[BOARD[row1][col1]?.checker?.type]
+    const color2 = CHECKER_COLOR[BOARD[row2][col2]?.checker?.type]
+
+    return color1 != null && color2 != null && color1 !== color2
+}
+
+
+const calculateSituation = () => {
+    SITUATION.clear()
+
+    let foundMustBeFilled = false
+
+    for (let row = 0; row < BOARD_SIZE; row++)
+        for (let col = 0; col < BOARD_SIZE; col++) {
+            if (!isTurnOf(row, col))
+                continue
+            
+            const type = BOARD[row][col].checker.type
+
+            if (type === CHECKER_TYPE.WHITE_KING || type === CHECKER_TYPE.BLACK_KING) {
+                
+            }
+
+            else {
+                if (row < BOARD_SIZE - 2) {
+                    if (col > 1 && areFoes(row, col, row + 1, col - 1) && !hasChecker(row + 2, col - 2)) {
+                        addSituation(row, col, row + 2, col - 2, CELL_STATE.MUST_BE_FILLED)
+                        foundMustBeFilled = true
+                    }
+
+                    if (col < BOARD_SIZE - 2 && areFoes(row, col, row + 1, col + 1) && !hasChecker(row + 2, col + 2)) {
+                        addSituation(row, col, row + 2, col + 2, CELL_STATE.MUST_BE_FILLED)
+                        foundMustBeFilled = true
+                    }
+                }
+
+                if (row > 1) {
+                    if (col > 1 && areFoes(row, col, row - 1, col - 1) && !hasChecker(row - 2, col - 2)) {
+                        addSituation(row, col, row - 2, col - 2, CELL_STATE.MUST_BE_FILLED)
+                        foundMustBeFilled = true
+                    }
+
+                    if (col < BOARD_SIZE - 2 && areFoes(row, col, row - 1, col + 1) && !hasChecker(row - 2, col + 2)) {
+                        addSituation(row, col, row - 2, col + 2, CELL_STATE.MUST_BE_FILLED)
+                        foundMustBeFilled = true
+                    }
+                }
+
+                if (!foundMustBeFilled) {
+                    if (isWhite(row, col) && row < BOARD_SIZE - 1) {
+                        if (col > 0 && !hasChecker(row + 1, col - 1))
+                            addSituation(row, col, row + 1, col - 1, CELL_STATE.CAN_BE_FILLED)
+
+                        if (col < BOARD_SIZE - 1 && !hasChecker(row + 1, col + 1))
+                            addSituation(row, col, row + 1, col + 1, CELL_STATE.CAN_BE_FILLED)
+                    }
+
+                    else if (isBlack(row, col) && row > 0) {
+                        if (col > 0 && !hasChecker(row - 1, col - 1))
+                            addSituation(row, col, row - 1, col - 1, CELL_STATE.CAN_BE_FILLED)
+
+                        if (col < BOARD_SIZE - 1 && !hasChecker(row - 1, col + 1))
+                            addSituation(row, col, row - 1, col + 1, CELL_STATE.CAN_BE_FILLED)
+                    }
+                }
+            }
+        }
+
+    if (foundMustBeFilled)
+        for (let entry of SITUATION) {
+            const [cellFrom, cellsTo] = entry
+            const filteredCellsTo = cellsTo.filter(cellTo => cellTo.state === CELL_STATE.MUST_BE_FILLED)
+
+            if (filteredCellsTo.length === 0)
+                SITUATION.delete(cellFrom)
+            else
+                SITUATION.set(cellFrom, filteredCellsTo)
+        }
+}
+
+
+const togglePromptMode = (row, col) => {
+    if (!isTurnOf(row, col))
+        return []
 
     const state = BOARD[row][col].state
+    const cellsTo = SITUATION.get(BOARD[row][col]) || []
 
     if (promptMode && state === CELL_STATE.PROMPT) {
         promptMode = false
         BOARD[row][col].state = CELL_STATE.DEFAULT
+
+        for (cell of cellsTo)
+            BOARD[cell.row][cell.col].state = CELL_STATE.DEFAULT
     }
 
     else if (!promptMode && state === CELL_STATE.DEFAULT) {
         promptMode = true
         BOARD[row][col].state = CELL_STATE.PROMPT
+
+        for (cell of cellsTo)
+            BOARD[cell.row][cell.col].state = cell.state
     }
 
+    return cellsTo.map(cell => ({row: cell.row, col: cell.col}))
+}
+
+
+const cellOnClick = (row, col) => {
+    const changedCells = togglePromptMode(row, col)
+
     renderCell(row, col)
+    changedCells.forEach(cell => renderCell(cell.row, cell.col))
 }
 
 
@@ -186,10 +332,12 @@ const init = () => {
 
     startButton.addEventListener('click', () => {
         startArrangement()
+        calculateSituation()
         renderBoard()
     })
     example1button.addEventListener('click', () => {
         example1Arrangement()
+        calculateSituation()
         renderBoard()
     })
     finishTurnButton.addEventListener('click', () => turn())
