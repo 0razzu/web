@@ -50,7 +50,7 @@ const hasChecker = (row, col) => BOARD[row][col]?.checker != null
 const renderChecker = (row, col) => {
     const checker = BOARD[row][col].checker
 
-    BOARD_VIEW[row][col].innerHTML = checker === null? '' : '<img src="' + CHECKER_PIC[checker.type] + '">'
+    BOARD_VIEW[row][col].innerHTML = checker == null? '' : '<img src="' + CHECKER_PIC[checker.type] + '">'
 }
 
 
@@ -138,7 +138,7 @@ const isTurnOf = (row, col) => {
 }
 
 
-const addSituation = (rowFrom, colFrom, rowTo, colTo, state) => {
+const addToSituation = (rowFrom, colFrom, rowTo, colTo, state) => {
     const cellFrom = BOARD[rowFrom][colFrom]
     let cellsTo = SITUATION.get(cellFrom)
     const newCell = {row: rowTo, col: colTo, state: state}
@@ -187,7 +187,7 @@ const calculateSituation = () => {
             
             const type = BOARD[row][col].checker.type
 
-            if (type === CHECKER_TYPE.WHITE_KING || type === CHECKER_TYPE.BLACK_KING) {
+            if (type === CHECKER_TYPE.WHITE_KING || type === CHECKER_TYPE.BLACK_KING)
                 for (it of [iterator(row, col, 1, -1), iterator(row, col, 1, 1), iterator(row, col, -1, 1), iterator(row, col, -1, -1)]) {
                     let res = it.next()
                     let foundFoe = false
@@ -197,13 +197,13 @@ const calculateSituation = () => {
 
                         if (!hasChecker(rowTo, colTo)) {
                             if (foundFoe) {
-                                addSituation(row, col, rowTo, colTo, CELL_STATE.MUST_BE_FILLED)
+                                addToSituation(row, col, rowTo, colTo, CELL_STATE.MUST_BE_FILLED)
                                 foundMustBeFilled = true
                                 break
                             }
 
                             else if (!foundMustBeFilled)
-                                addSituation(row, col, rowTo, colTo, CELL_STATE.CAN_BE_FILLED)
+                                addToSituation(row, col, rowTo, colTo, CELL_STATE.CAN_BE_FILLED)
                         }
 
                         else if (areFoes(row, col, rowTo, colTo))
@@ -215,29 +215,28 @@ const calculateSituation = () => {
                         res = it.next()
                     } 
                 }
-            }
 
             else {
                 if (row < BOARD_SIZE - 2) {
                     if (col > 1 && areFoes(row, col, row + 1, col - 1) && !hasChecker(row + 2, col - 2)) {
-                        addSituation(row, col, row + 2, col - 2, CELL_STATE.MUST_BE_FILLED)
+                        addToSituation(row, col, row + 2, col - 2, CELL_STATE.MUST_BE_FILLED)
                         foundMustBeFilled = true
                     }
 
                     if (col < BOARD_SIZE - 2 && areFoes(row, col, row + 1, col + 1) && !hasChecker(row + 2, col + 2)) {
-                        addSituation(row, col, row + 2, col + 2, CELL_STATE.MUST_BE_FILLED)
+                        addToSituation(row, col, row + 2, col + 2, CELL_STATE.MUST_BE_FILLED)
                         foundMustBeFilled = true
                     }
                 }
 
                 if (row > 1) {
                     if (col > 1 && areFoes(row, col, row - 1, col - 1) && !hasChecker(row - 2, col - 2)) {
-                        addSituation(row, col, row - 2, col - 2, CELL_STATE.MUST_BE_FILLED)
+                        addToSituation(row, col, row - 2, col - 2, CELL_STATE.MUST_BE_FILLED)
                         foundMustBeFilled = true
                     }
 
                     if (col < BOARD_SIZE - 2 && areFoes(row, col, row - 1, col + 1) && !hasChecker(row - 2, col + 2)) {
-                        addSituation(row, col, row - 2, col + 2, CELL_STATE.MUST_BE_FILLED)
+                        addToSituation(row, col, row - 2, col + 2, CELL_STATE.MUST_BE_FILLED)
                         foundMustBeFilled = true
                     }
                 }
@@ -245,18 +244,18 @@ const calculateSituation = () => {
                 if (!foundMustBeFilled) {
                     if (isWhite(row, col) && row < BOARD_SIZE - 1) {
                         if (col > 0 && !hasChecker(row + 1, col - 1))
-                            addSituation(row, col, row + 1, col - 1, CELL_STATE.CAN_BE_FILLED)
+                            addToSituation(row, col, row + 1, col - 1, CELL_STATE.CAN_BE_FILLED)
 
                         if (col < BOARD_SIZE - 1 && !hasChecker(row + 1, col + 1))
-                            addSituation(row, col, row + 1, col + 1, CELL_STATE.CAN_BE_FILLED)
+                            addToSituation(row, col, row + 1, col + 1, CELL_STATE.CAN_BE_FILLED)
                     }
 
                     else if (isBlack(row, col) && row > 0) {
                         if (col > 0 && !hasChecker(row - 1, col - 1))
-                            addSituation(row, col, row - 1, col - 1, CELL_STATE.CAN_BE_FILLED)
+                            addToSituation(row, col, row - 1, col - 1, CELL_STATE.CAN_BE_FILLED)
 
                         if (col < BOARD_SIZE - 1 && !hasChecker(row - 1, col + 1))
-                            addSituation(row, col, row - 1, col + 1, CELL_STATE.CAN_BE_FILLED)
+                            addToSituation(row, col, row - 1, col + 1, CELL_STATE.CAN_BE_FILLED)
                     }
                 }
             }
