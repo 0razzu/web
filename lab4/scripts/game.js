@@ -161,6 +161,20 @@ const areFoes = (row1, col1, row2, col2) => {
 }
 
 
+const iterator = (row, col, rowDir, colDir) => {
+    return {
+        next: () => {
+            row += rowDir
+            col += colDir
+
+            return (row > -1 && row < BOARD_SIZE && col > -1 && col < BOARD_SIZE)?
+                {value: {row: row, col: col}, done: false} :
+                {done: true}
+        }
+    }
+}
+
+
 const calculateSituation = () => {
     SITUATION.clear()
 
@@ -174,7 +188,33 @@ const calculateSituation = () => {
             const type = BOARD[row][col].checker.type
 
             if (type === CHECKER_TYPE.WHITE_KING || type === CHECKER_TYPE.BLACK_KING) {
-                
+                for (it of [iterator(row, col, 1, -1), iterator(row, col, 1, 1), iterator(row, col, -1, 1), iterator(row, col, -1, -1)]) {
+                    let res = it.next()
+                    let foundFoe = false
+
+                    while (!res.done) {
+                        let {row: rowTo, col: colTo} = res.value
+
+                        if (!hasChecker(rowTo, colTo)) {
+                            if (foundFoe) {
+                                addSituation(row, col, rowTo, colTo, CELL_STATE.MUST_BE_FILLED)
+                                foundMustBeFilled = true
+                                break
+                            }
+
+                            else if (!foundMustBeFilled)
+                                addSituation(row, col, rowTo, colTo, CELL_STATE.CAN_BE_FILLED)
+                        }
+
+                        else if (areFoes(row, col, rowTo, colTo))
+                            foundFoe = true
+
+                        else
+                            break
+
+                        res = it.next()
+                    } 
+                }
             }
 
             else {
