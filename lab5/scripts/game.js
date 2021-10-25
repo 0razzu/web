@@ -39,6 +39,8 @@ const statusStr = document.getElementById('status')
 const startButton = document.getElementById('start')
 const example1button = document.getElementById('example1')
 const finishTurnButton = document.getElementById('finish-turn')
+const cancelTurnButton = document.getElementById('cancel-turn')
+const moveList = document.getElementById('move-list')
 
 
 const isPlayCell = (row, col) => (row + col) % 2 === 0
@@ -98,18 +100,17 @@ const renderBoard = () => {
 }
 
 
-const turn = () => {
-    if (whoseTurn === 'w') {
-        whoseTurn = 'b'
-        statusStr.innerText = 'Ходят чёрные'
-    }
-
-    else {
-        whoseTurn = 'w'
-        statusStr.innerText = 'Ходят белые'
-    }
+const toggleTurn = () => {
+    whoseTurn = whoseTurn === 'w'? 'b' : 'w'
 
     calculateSituation()
+}
+
+
+const renderTurn = () => {
+    statusStr.innerText = whoseTurn === 'w'?
+        'Ходят белые' :
+        'Ходят чёрные'
 }
 
 
@@ -310,6 +311,8 @@ const cellOnClick = (row, col) => {
 
 
 const startArrangement = () => {
+    whoseTurn = 'w'
+
     for (let row = 0; row < 3; row++)
         for (let col = 0; col < BOARD_SIZE; col++)
             if (isPlayCell(row, col))
@@ -345,6 +348,17 @@ const example1Arrangement = () => {
 }
 
 
+const arrangementButtonOnClick = (arrangement) => {
+    arrangement()
+    promptMode = false
+    calculateSituation()
+
+    renderBoard()
+    renderTurn()
+    moveList.innerHTML = ''
+}
+
+
 const init = () => {
     for (let row = 0; row < BOARD_SIZE; row++)
         for (let col = 0; col < BOARD_SIZE; col++)
@@ -369,17 +383,13 @@ const init = () => {
         for (let col = 0; col < BOARD_SIZE; col++)
             BOARD_VIEW[row][col]?.addEventListener('click', () => cellOnClick(row, col))
 
-    startButton.addEventListener('click', () => {
-        startArrangement()
-        calculateSituation()
-        renderBoard()
+    startButton.addEventListener('click', () => arrangementButtonOnClick(startArrangement))
+    example1button.addEventListener('click', () => arrangementButtonOnClick(example1Arrangement))
+    finishTurnButton.addEventListener('click', () => {
+        toggleTurn()
+        renderTurn()
     })
-    example1button.addEventListener('click', () => {
-        example1Arrangement()
-        calculateSituation()
-        renderBoard()
-    })
-    finishTurnButton.addEventListener('click', () => turn())
+    cancelTurnButton.addEventListener('click', () => console.log('stub'))
 }
 
 
