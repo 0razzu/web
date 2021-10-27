@@ -4,7 +4,8 @@ const BOARD_BACKUP = Array.from(Array(BOARD_SIZE), () => Array(BOARD_SIZE))
 let BOARD_VIEW
 let SITUATION = new Map()
 let inPromptMode = null
-let moved = null
+let movedFrom = null
+let movedTo = null
 let becomeKing = false
 let killed = []
 let whoseTurn = 'w'
@@ -290,7 +291,7 @@ const togglePromptMode = cell => {
             dest.dest.state = CELL_STATE.DEFAULT
     }
 
-    else if (inPromptMode === null && (moved === null || (killed.length !== 0 && dests.length !== 0))) {
+    else if (inPromptMode === null && (movedFrom === null || (killed.length !== 0 && dests.length !== 0))) {
         inPromptMode = cell
         cell.state = CELL_STATE.PROMPT
 
@@ -309,19 +310,21 @@ const cellOnClick = (row, col) => {
     let changedCells
     let targetCell = BOARD[row][col]
 
-    if (inPromptMode === null || (!moved && inPromptMode === targetCell))
+    if (inPromptMode === null || (!movedFrom && inPromptMode === targetCell))
         changedCells = togglePromptMode(targetCell)
 
     else if (targetCell.state === CELL_STATE.CAN_BE_FILLED) {
-        moved = inPromptMode
+        movedFrom = inPromptMode
         changedCells = togglePromptMode(inPromptMode)
-        move(moved.row, moved.col, row, col)
+        move(movedFrom.row, movedFrom.col, row, col)
+        movedTo = BOARD[row][col]
     }
 
     else if (targetCell.state === CELL_STATE.MUST_BE_FILLED) {
         const wasInPromptMode = inPromptMode
         changedCells = togglePromptMode(inPromptMode)
         move(wasInPromptMode.row, wasInPromptMode.col, row, col)
+        movedTo = BOARD[row][col]
 
         if (whoseTurn === 'w' && row === BOARD_SIZE - 1) {
             targetCell.checker.type = CHECKER_TYPE.WHITE_KING
@@ -338,8 +341,8 @@ const cellOnClick = (row, col) => {
         changedCells.push(killedCell)
         killed.push(killedCell)
 
-        if (moved === null)
-            moved = wasInPromptMode
+        if (movedFrom === null)
+            movedFrom = wasInPromptMode
 
         calculateSituation()
         changedCells = changedCells.concat(togglePromptMode(targetCell))
@@ -399,26 +402,59 @@ const arrangementButtonOnClick = (arrangement) => {
 
 
 const cancelTurnButtonOnClick = () => {
+    if (movedFrom === null && inPromptMode === null)
+        return
+
+    const curCell = movedTo === null? inPromptMode : movedTo
+
+    SITUATION.get(curCell)?.forEach(dest => {
+        dest.dest.state = CELL_STATE.DEFAULT
+        renderCell(dest.dest.row, dest.dest.col)
+    })
+
+    if (movedFrom !== null) {
+        if (becomeKing) {
+            movedTo.checker.type = whoseTurn === 'w'? CHECKER_TYPE.WHITE : CHECKER_TYPE.BLACK
+            becomeKing = false
+        }
+
+        movedFrom.checker = movedTo.checker
+        movedTo.checker = null
+        movedTo.state = CELL_STATE.DEFAULT
+
+        renderCell(movedFrom.row, movedFrom.col)
+        renderCell(movedTo.row, movedTo.col)
+
+        movedFrom = null
+        movedTo = null
+    }
+
+    else {
+        inPromptMode.state = CELL_STATE.DEFAULT
+        renderCell(inPromptMode.row, inPromptMode.col)
+    }
+
     inPromptMode = null
-    moved = null
-    // TODO remove KILLED, rollback
+
+    if (killed.length !== 0) {
+        for (cell of killed) {
+            const {row, col} = cell
+            BOARD[row][col].state = CELL_STATE.DEFAULT
+            renderCell(row, col)
+        }
+
+        killed = []
+        calculateSituation()
+    }
 }
 
 
 const finishTurnButtonOnClick = () => {
-    if (moved === null)
+    if (movedFrom === null || inPromptMode !== null)
         return
 
-    if (inPromptMode !== null) {
-        if (SITUATION.get(inPromptMode) !== undefined)
-            return
-
-        inPromptMode.state = CELL_STATE.DEFAULT
-        renderCell(inPromptMode.row, inPromptMode.col)
-        inPromptMode = null
-    }
-
-    moved = null
+    movedFrom = null
+    movedTo = null
     becomeKing = false
     
     for (cell of killed) {
