@@ -62,7 +62,9 @@ const renderChecker = (row, col) => {
 
 
 const place = (type, row, col) => {
-    BOARD[row][col].checker = {type: type}
+    const cell = BOARD[row][col]
+
+    cell.checker = {type: type, cell: cell}
 }
 
 
@@ -140,18 +142,15 @@ const isTurnOf = (row, col) => {
 }
 
 
-const addToSituation = (rowFrom, colFrom, rowTo, colTo, state, foe) => {
-    const cellFrom = BOARD[rowFrom][colFrom]
-    let cellsTo = SITUATION.get(cellFrom)
-    const newCell = {row: rowTo, col: colTo, state: state, foe: foe}
+const addToSituation = (cell, dest, state, foe) => {
+    let dests = SITUATION.get(cell)
+    const newDest = {dest: dest, state: state, foe: foe}
 
-    if (cellsTo == null) {
-        cellsTo = [newCell]
-        SITUATION.set(cellFrom, cellsTo)
-    }
+    if (dests === undefined)
+        SITUATION.set(cell, [newDest])
 
     else
-        cellsTo.push(newCell)
+        dests.push(newDest)
 }
 
 
@@ -177,9 +176,6 @@ const iterator = (row, col, rowDir, colDir) => {
 }
 
 
-const foe = (row, col) => ({cell: BOARD[row][col], row: row, col: col})
-
-
 const calculateSituation = () => {
     SITUATION.clear()
 
@@ -202,17 +198,17 @@ const calculateSituation = () => {
 
                         if (!hasChecker(rowTo, colTo)) {
                             if (foe !== null) {
-                                addToSituation(row, col, rowTo, colTo, CELL_STATE.MUST_BE_FILLED, foe)
+                                addToSituation(BOARD[row][col], BOARD[rowTo][colTo], CELL_STATE.MUST_BE_FILLED, foe)
                                 foundMustBeFilled = true
                                 break
                             }
 
                             else if (!foundMustBeFilled)
-                                addToSituation(row, col, rowTo, colTo, CELL_STATE.CAN_BE_FILLED)
+                                addToSituation(BOARD[row][col], BOARD[rowTo][colTo], CELL_STATE.CAN_BE_FILLED)
                         }
 
                         else if (areFoes(row, col, rowTo, colTo))
-                            foe = foe(rowTo, colTo)
+                            foe = BOARD[rowTo][colTo]
 
                         else
                             break
@@ -224,24 +220,24 @@ const calculateSituation = () => {
             else {
                 if (row < BOARD_SIZE - 2) {
                     if (col > 1 && areFoes(row, col, row + 1, col - 1) && !hasChecker(row + 2, col - 2)) {
-                        addToSituation(row, col, row + 2, col - 2, CELL_STATE.MUST_BE_FILLED, foe(row + 1, col - 1))
+                        addToSituation(BOARD[row][col], BOARD[row + 2][col - 2], CELL_STATE.MUST_BE_FILLED, BOARD[row + 1][col - 1])
                         foundMustBeFilled = true
                     }
 
                     if (col < BOARD_SIZE - 2 && areFoes(row, col, row + 1, col + 1) && !hasChecker(row + 2, col + 2)) {
-                        addToSituation(row, col, row + 2, col + 2, CELL_STATE.MUST_BE_FILLED, foe(row + 1, col + 1))
+                        addToSituation(BOARD[row][col], BOARD[row + 2][col + 2], CELL_STATE.MUST_BE_FILLED, BOARD[row + 1][col + 1])
                         foundMustBeFilled = true
                     }
                 }
 
                 if (row > 1) {
                     if (col > 1 && areFoes(row, col, row - 1, col - 1) && !hasChecker(row - 2, col - 2)) {
-                        addToSituation(row, col, row - 2, col - 2, CELL_STATE.MUST_BE_FILLED, foe(row - 1, col - 1))
+                        addToSituation(BOARD[row][col], BOARD[row - 2][col - 2], CELL_STATE.MUST_BE_FILLED, BOARD[row - 1][col - 1])
                         foundMustBeFilled = true
                     }
 
                     if (col < BOARD_SIZE - 2 && areFoes(row, col, row - 1, col + 1) && !hasChecker(row - 2, col + 2)) {
-                        addToSituation(row, col, row - 2, col + 2, CELL_STATE.MUST_BE_FILLED, foe(row - 1, col + 1))
+                        addToSituation(BOARD[row][col], BOARD[row - 2][col + 2], CELL_STATE.MUST_BE_FILLED, BOARD[row - 1][col + 1])
                         foundMustBeFilled = true
                     }
                 }
@@ -249,18 +245,18 @@ const calculateSituation = () => {
                 if (!foundMustBeFilled) {
                     if (isWhite(row, col) && row < BOARD_SIZE - 1) {
                         if (col > 0 && !hasChecker(row + 1, col - 1))
-                            addToSituation(row, col, row + 1, col - 1, CELL_STATE.CAN_BE_FILLED)
+                            addToSituation(BOARD[row][col], BOARD[row + 1][col - 1], CELL_STATE.CAN_BE_FILLED)
 
                         if (col < BOARD_SIZE - 1 && !hasChecker(row + 1, col + 1))
-                            addToSituation(row, col, row + 1, col + 1, CELL_STATE.CAN_BE_FILLED)
+                            addToSituation(BOARD[row][col], BOARD[row + 1][col + 1], CELL_STATE.CAN_BE_FILLED)
                     }
 
                     else if (isBlack(row, col) && row > 0) {
                         if (col > 0 && !hasChecker(row - 1, col - 1))
-                            addToSituation(row, col, row - 1, col - 1, CELL_STATE.CAN_BE_FILLED)
+                            addToSituation(BOARD[row][col], BOARD[row - 1][col - 1], CELL_STATE.CAN_BE_FILLED)
 
                         if (col < BOARD_SIZE - 1 && !hasChecker(row - 1, col + 1))
-                            addToSituation(row, col, row - 1, col + 1, CELL_STATE.CAN_BE_FILLED)
+                            addToSituation(BOARD[row][col], BOARD[row - 1][col + 1], CELL_STATE.CAN_BE_FILLED)
                     }
                 }
             }
@@ -269,7 +265,7 @@ const calculateSituation = () => {
     if (foundMustBeFilled)
         for (let entry of SITUATION) {
             const [cellFrom, cellsTo] = entry
-            const filteredCellsTo = cellsTo.filter(cellTo => cellTo.state === CELL_STATE.MUST_BE_FILLED && cellTo.foe.cell.state !== CELL_STATE.KILLED)
+            const filteredCellsTo = cellsTo.filter(cellTo => cellTo.state === CELL_STATE.MUST_BE_FILLED && cellTo.foe.state !== CELL_STATE.KILLED)
 
             if (filteredCellsTo.length === 0)
                 SITUATION.delete(cellFrom)
@@ -279,32 +275,30 @@ const calculateSituation = () => {
 }
 
 
-const togglePromptMode = (row, col) => {
-    if (!isTurnOf(row, col))
+const togglePromptMode = cell => {
+    if (!isTurnOf(cell.row, cell.col))
         return []
 
-    const targetCell = BOARD[row][col]
-    const state = targetCell.state
-    const cellsTo = SITUATION.get(targetCell) || []
+    const dests = SITUATION.get(cell) || []
 
-    if (inPromptMode?.row === row && inPromptMode?.col === col) {
+    if (inPromptMode === cell) {
         inPromptMode = null
-        targetCell.state = CELL_STATE.DEFAULT
+        cell.state = CELL_STATE.DEFAULT
 
-        for (cell of cellsTo)
-            BOARD[cell.row][cell.col].state = CELL_STATE.DEFAULT
+        for (dest of dests)
+            dest.dest.state = CELL_STATE.DEFAULT
     }
 
     else if (inPromptMode === null && moved === null) {
-        inPromptMode = {cell: targetCell, row: row, col: col}
-        targetCell.state = CELL_STATE.PROMPT
+        inPromptMode = cell
+        cell.state = CELL_STATE.PROMPT
 
-        for (cell of cellsTo)
-            BOARD[cell.row][cell.col].state = cell.state
+        for (dest of dests)
+            dest.dest.state = dest.state
     }
 
-    let changedCells = cellsTo.map(cell => ({row: cell.row, col: cell.col}))
-    changedCells.push({row: row, col: col})
+    let changedCells = dests.map(dest => dest.dest)
+    changedCells.push(cell)
 
     return changedCells
 }
@@ -314,30 +308,30 @@ const cellOnClick = (row, col) => {
     let changedCells
     let targetCell = BOARD[row][col]
 
-    if (inPromptMode === null || (!moved && inPromptMode.cell === targetCell))
-        changedCells = togglePromptMode(row, col)
+    if (inPromptMode === null || (!moved && inPromptMode === targetCell))
+        changedCells = togglePromptMode(targetCell)
 
     else if (targetCell.state === CELL_STATE.CAN_BE_FILLED) {
         moved = inPromptMode
-        changedCells = togglePromptMode(inPromptMode.row, inPromptMode.col)
+        changedCells = togglePromptMode(inPromptMode)
         move(moved.row, moved.col, row, col)
     }
 
     else if (targetCell.state === CELL_STATE.MUST_BE_FILLED) {
         const wasInPromptMode = inPromptMode
-        changedCells = togglePromptMode(inPromptMode.row, inPromptMode.col)
+        changedCells = togglePromptMode(inPromptMode)
         move(wasInPromptMode.row, wasInPromptMode.col, row, col)
 
-        const killedCell = SITUATION.get(BOARD[wasInPromptMode.row][wasInPromptMode.col]).filter(cell => cell.row === row && cell.col === col)[0].foe
-        killedCell.cell.state = CELL_STATE.KILLED
-        changedCells.push({row: killedCell.row, col: killedCell.col})
+        const killedCell = SITUATION.get(BOARD[wasInPromptMode.row][wasInPromptMode.col]).filter(dest => dest.dest.row === row && dest.dest.col === col)[0].foe
+        killedCell.state = CELL_STATE.KILLED
+        changedCells.push(killedCell)
         killed.push(killedCell)
 
         if (moved === null)
             moved = inPromptMode
 
         calculateSituation()
-        changedCells = changedCells.concat(togglePromptMode(row, col))
+        changedCells = changedCells.concat(togglePromptMode(targetCell))
     }
 
     changedCells?.forEach(cell => renderCell(cell.row, cell.col))
@@ -350,17 +344,17 @@ const startArrangement = () => {
     for (let row = 0; row < 3; row++)
         for (let col = 0; col < BOARD_SIZE; col++)
             if (isPlayCell(row, col))
-                BOARD[row][col].checker = {type: CHECKER_TYPE.WHITE}
+                place(CHECKER_TYPE.WHITE, row, col)
 
     for (let row = 3; row < 5; row++)
         for (let col = 0; col < BOARD_SIZE; col++)
             if (isPlayCell(row, col))
-                BOARD[row][col].checker = null
+                clear(row, col)
 
     for (let row = 5; row < BOARD_SIZE; row++)
         for (let col = 0; col < BOARD_SIZE; col++)
             if (isPlayCell(row, col))
-                BOARD[row][col].checker = {type: CHECKER_TYPE.BLACK}
+                place(CHECKER_TYPE.BLACK, row, col)
 }
 
 
@@ -368,17 +362,17 @@ const example1Arrangement = () => {
     for (let row = 0; row < BOARD_SIZE; row++)
         for (let col = 0; col < BOARD_SIZE; col++)
             if (isPlayCell(row, col))
-                BOARD[row][col].checker = null
+                clear(row, col)
 
-    BOARD[3][5].checker = {type: CHECKER_TYPE.WHITE}
-    BOARD[3][7].checker = {type: CHECKER_TYPE.WHITE}
+    place(CHECKER_TYPE.WHITE, 3, 5)
+    place(CHECKER_TYPE.WHITE, 3, 7)
 
-    BOARD[7][1].checker = {type: CHECKER_TYPE.BLACK}
-    BOARD[0][2].checker = {type: CHECKER_TYPE.BLACK_KING}
-    BOARD[4][2].checker = {type: CHECKER_TYPE.BLACK}
-    BOARD[6][2].checker = {type: CHECKER_TYPE.BLACK}
-    BOARD[6][4].checker = {type: CHECKER_TYPE.BLACK}
-    BOARD[5][7].checker = {type: CHECKER_TYPE.BLACK}
+    place(CHECKER_TYPE.BLACK, 7, 1)
+    place(CHECKER_TYPE.BLACK_KING, 0, 2)
+    place(CHECKER_TYPE.BLACK, 4, 2)
+    place(CHECKER_TYPE.BLACK, 6, 2)
+    place(CHECKER_TYPE.BLACK, 6, 4)
+    place(CHECKER_TYPE.BLACK, 5, 7)
 }
 
 
@@ -402,10 +396,10 @@ const cancelTurnButtonOnClick = () => {
 
 const finishTurnButtonOnClick = () => {
     if (inPromptMode !== null) {
-        if (SITUATION.get(inPromptMode.cell) !== undefined)
+        if (SITUATION.get(inPromptMode) !== undefined)
             return
 
-        inPromptMode.cell.state = CELL_STATE.DEFAULT
+        inPromptMode.state = CELL_STATE.DEFAULT
         renderCell(inPromptMode.row, inPromptMode.col)
         inPromptMode = null
     }
@@ -430,7 +424,7 @@ const init = () => {
     for (let row = 0; row < BOARD_SIZE; row++)
         for (let col = 0; col < BOARD_SIZE; col++)
             if (isPlayCell(row, col))
-                BOARD[row][col] = {state: CELL_STATE.DEFAULT}
+                BOARD[row][col] = {row: row, col: col, state: CELL_STATE.DEFAULT}
 
     let col = 0
 
