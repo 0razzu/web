@@ -8,6 +8,7 @@
     --yellow: #cfb53b;
     --green: #48c417;
     --red: #c53c17;
+    --blue: #179fc4;
     --light-telegray: #d0d0d0;
     --smoke: #888888;
     --curb: #555555;
@@ -206,6 +207,10 @@ td {
 
 .board .must-be-filled {
     background: var(--red) !important;
+}
+
+.board .killed {
+    background: var(--blue) !important;
 }
 
 .board img {

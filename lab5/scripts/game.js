@@ -1,20 +1,25 @@
 const BOARD_SIZE = 8
 const BOARD = Array.from(Array(BOARD_SIZE), () => Array(BOARD_SIZE))
+const BOARD_BACKUP = Array.from(Array(BOARD_SIZE), () => Array(BOARD_SIZE))
 let BOARD_VIEW
 let SITUATION = new Map()
-let promptMode = false
+let inPromptMode = null
+let moved = null
+let killed = []
 let whoseTurn = 'w'
 
 const CELL_STATE = {
     DEFAULT: 0,
     PROMPT: 1,
     CAN_BE_FILLED: 2,
-    MUST_BE_FILLED: 3
+    MUST_BE_FILLED: 3,
+    KILLED: 4
 }
 const CELL_STATE_CLASS = {
     [CELL_STATE.PROMPT]: 'prompt',
     [CELL_STATE.CAN_BE_FILLED]: 'can-be-filled',
-    [CELL_STATE.MUST_BE_FILLED]: 'must-be-filled'
+    [CELL_STATE.MUST_BE_FILLED]: 'must-be-filled',
+    [CELL_STATE.KILLED]: 'killed'
 }
 const CHECKER_TYPE = {
     BLACK: -1,
@@ -38,8 +43,8 @@ const CHECKER_COLOR = {
 const statusStr = document.getElementById('status')
 const startButton = document.getElementById('start')
 const example1button = document.getElementById('example1')
-const finishTurnButton = document.getElementById('finish-turn')
 const cancelTurnButton = document.getElementById('cancel-turn')
+const finishTurnButton = document.getElementById('finish-turn')
 const moveList = document.getElementById('move-list')
 
 
@@ -58,20 +63,16 @@ const renderChecker = (row, col) => {
 
 const place = (type, row, col) => {
     BOARD[row][col].checker = {type: type}
-
-    renderChecker(row, col)
 }
 
 
 const clear = (row, col) => {
     BOARD[row][col].checker = null
-
-    BOARD_VIEW[row][col].innerHTML = ''
 }
 
 
 const move = (rowFrom, colFrom, rowTo, colTo) => {
-    const type = BOARD[rowFrom][colFrom].type
+    const type = BOARD[rowFrom][colFrom].checker.type
 
     clear(rowFrom, colFrom)
     place(type, rowTo, colTo)
@@ -139,10 +140,10 @@ const isTurnOf = (row, col) => {
 }
 
 
-const addToSituation = (rowFrom, colFrom, rowTo, colTo, state) => {
+const addToSituation = (rowFrom, colFrom, rowTo, colTo, state, foe) => {
     const cellFrom = BOARD[rowFrom][colFrom]
     let cellsTo = SITUATION.get(cellFrom)
-    const newCell = {row: rowTo, col: colTo, state: state}
+    const newCell = {row: rowTo, col: colTo, state: state, foe: foe}
 
     if (cellsTo == null) {
         cellsTo = [newCell]
@@ -176,6 +177,9 @@ const iterator = (row, col, rowDir, colDir) => {
 }
 
 
+const foe = (row, col) => ({cell: BOARD[row][col], row: row, col: col})
+
+
 const calculateSituation = () => {
     SITUATION.clear()
 
@@ -191,14 +195,14 @@ const calculateSituation = () => {
             if (type === CHECKER_TYPE.WHITE_KING || type === CHECKER_TYPE.BLACK_KING)
                 for (it of [iterator(row, col, 1, -1), iterator(row, col, 1, 1), iterator(row, col, -1, 1), iterator(row, col, -1, -1)]) {
                     let res = it.next()
-                    let foundFoe = false
+                    let foe = null
 
                     while (!res.done) {
                         let {row: rowTo, col: colTo} = res.value
 
                         if (!hasChecker(rowTo, colTo)) {
-                            if (foundFoe) {
-                                addToSituation(row, col, rowTo, colTo, CELL_STATE.MUST_BE_FILLED)
+                            if (foe !== null) {
+                                addToSituation(row, col, rowTo, colTo, CELL_STATE.MUST_BE_FILLED, foe)
                                 foundMustBeFilled = true
                                 break
                             }
@@ -208,7 +212,7 @@ const calculateSituation = () => {
                         }
 
                         else if (areFoes(row, col, rowTo, colTo))
-                            foundFoe = true
+                            foe = foe(rowTo, colTo)
 
                         else
                             break
@@ -220,24 +224,24 @@ const calculateSituation = () => {
             else {
                 if (row < BOARD_SIZE - 2) {
                     if (col > 1 && areFoes(row, col, row + 1, col - 1) && !hasChecker(row + 2, col - 2)) {
-                        addToSituation(row, col, row + 2, col - 2, CELL_STATE.MUST_BE_FILLED)
+                        addToSituation(row, col, row + 2, col - 2, CELL_STATE.MUST_BE_FILLED, foe(row + 1, col - 1))
                         foundMustBeFilled = true
                     }
 
                     if (col < BOARD_SIZE - 2 && areFoes(row, col, row + 1, col + 1) && !hasChecker(row + 2, col + 2)) {
-                        addToSituation(row, col, row + 2, col + 2, CELL_STATE.MUST_BE_FILLED)
+                        addToSituation(row, col, row + 2, col + 2, CELL_STATE.MUST_BE_FILLED, foe(row + 1, col + 1))
                         foundMustBeFilled = true
                     }
                 }
 
                 if (row > 1) {
                     if (col > 1 && areFoes(row, col, row - 1, col - 1) && !hasChecker(row - 2, col - 2)) {
-                        addToSituation(row, col, row - 2, col - 2, CELL_STATE.MUST_BE_FILLED)
+                        addToSituation(row, col, row - 2, col - 2, CELL_STATE.MUST_BE_FILLED, foe(row - 1, col - 1))
                         foundMustBeFilled = true
                     }
 
                     if (col < BOARD_SIZE - 2 && areFoes(row, col, row - 1, col + 1) && !hasChecker(row - 2, col + 2)) {
-                        addToSituation(row, col, row - 2, col + 2, CELL_STATE.MUST_BE_FILLED)
+                        addToSituation(row, col, row - 2, col + 2, CELL_STATE.MUST_BE_FILLED, foe(row - 1, col + 1))
                         foundMustBeFilled = true
                     }
                 }
@@ -265,7 +269,7 @@ const calculateSituation = () => {
     if (foundMustBeFilled)
         for (let entry of SITUATION) {
             const [cellFrom, cellsTo] = entry
-            const filteredCellsTo = cellsTo.filter(cellTo => cellTo.state === CELL_STATE.MUST_BE_FILLED)
+            const filteredCellsTo = cellsTo.filter(cellTo => cellTo.state === CELL_STATE.MUST_BE_FILLED && cellTo.foe.cell.state !== CELL_STATE.KILLED)
 
             if (filteredCellsTo.length === 0)
                 SITUATION.delete(cellFrom)
@@ -279,34 +283,64 @@ const togglePromptMode = (row, col) => {
     if (!isTurnOf(row, col))
         return []
 
-    const state = BOARD[row][col].state
-    const cellsTo = SITUATION.get(BOARD[row][col]) || []
+    const targetCell = BOARD[row][col]
+    const state = targetCell.state
+    const cellsTo = SITUATION.get(targetCell) || []
 
-    if (promptMode && state === CELL_STATE.PROMPT) {
-        promptMode = false
-        BOARD[row][col].state = CELL_STATE.DEFAULT
+    if (inPromptMode?.row === row && inPromptMode?.col === col) {
+        inPromptMode = null
+        targetCell.state = CELL_STATE.DEFAULT
 
         for (cell of cellsTo)
             BOARD[cell.row][cell.col].state = CELL_STATE.DEFAULT
     }
 
-    else if (!promptMode && state === CELL_STATE.DEFAULT) {
-        promptMode = true
-        BOARD[row][col].state = CELL_STATE.PROMPT
+    else if (inPromptMode === null && moved === null) {
+        inPromptMode = {cell: targetCell, row: row, col: col}
+        targetCell.state = CELL_STATE.PROMPT
 
         for (cell of cellsTo)
             BOARD[cell.row][cell.col].state = cell.state
     }
 
-    return cellsTo.map(cell => ({row: cell.row, col: cell.col}))
+    let changedCells = cellsTo.map(cell => ({row: cell.row, col: cell.col}))
+    changedCells.push({row: row, col: col})
+
+    return changedCells
 }
 
 
 const cellOnClick = (row, col) => {
-    const changedCells = togglePromptMode(row, col)
+    let changedCells
+    let targetCell = BOARD[row][col]
 
-    renderCell(row, col)
-    changedCells.forEach(cell => renderCell(cell.row, cell.col))
+    if (inPromptMode === null || (!moved && inPromptMode.cell === targetCell))
+        changedCells = togglePromptMode(row, col)
+
+    else if (targetCell.state === CELL_STATE.CAN_BE_FILLED) {
+        moved = inPromptMode
+        changedCells = togglePromptMode(inPromptMode.row, inPromptMode.col)
+        move(moved.row, moved.col, row, col)
+    }
+
+    else if (targetCell.state === CELL_STATE.MUST_BE_FILLED) {
+        const wasInPromptMode = inPromptMode
+        changedCells = togglePromptMode(inPromptMode.row, inPromptMode.col)
+        move(wasInPromptMode.row, wasInPromptMode.col, row, col)
+
+        const killedCell = SITUATION.get(BOARD[wasInPromptMode.row][wasInPromptMode.col]).filter(cell => cell.row === row && cell.col === col)[0].foe
+        killedCell.cell.state = CELL_STATE.KILLED
+        changedCells.push({row: killedCell.row, col: killedCell.col})
+        killed.push(killedCell)
+
+        if (moved === null)
+            moved = inPromptMode
+
+        calculateSituation()
+        changedCells = changedCells.concat(togglePromptMode(row, col))
+    }
+
+    changedCells?.forEach(cell => renderCell(cell.row, cell.col))
 }
 
 
@@ -350,12 +384,45 @@ const example1Arrangement = () => {
 
 const arrangementButtonOnClick = (arrangement) => {
     arrangement()
-    promptMode = false
+    inPromptMode = null
     calculateSituation()
 
     renderBoard()
     renderTurn()
     moveList.innerHTML = ''
+}
+
+
+const cancelTurnButtonOnClick = () => {
+    inPromptMode = null
+    moved = null
+    // TODO remove KILLED, rollback
+}
+
+
+const finishTurnButtonOnClick = () => {
+    if (inPromptMode !== null) {
+        if (SITUATION.get(inPromptMode.cell) !== undefined)
+            return
+
+        inPromptMode.cell.state = CELL_STATE.DEFAULT
+        renderCell(inPromptMode.row, inPromptMode.col)
+        inPromptMode = null
+    }
+
+    moved = null
+    
+    for (cell of killed) {
+        const {row, col} = cell
+        clear(row, col)
+        BOARD[row][col].state = CELL_STATE.DEFAULT
+        renderCell(row, col)
+    }
+
+    killed = []
+
+    toggleTurn()
+    renderTurn()
 }
 
 
@@ -385,11 +452,8 @@ const init = () => {
 
     startButton.addEventListener('click', () => arrangementButtonOnClick(startArrangement))
     example1button.addEventListener('click', () => arrangementButtonOnClick(example1Arrangement))
-    finishTurnButton.addEventListener('click', () => {
-        toggleTurn()
-        renderTurn()
-    })
-    cancelTurnButton.addEventListener('click', () => console.log('stub'))
+    cancelTurnButton.addEventListener('click', () => cancelTurnButtonOnClick())
+    finishTurnButton.addEventListener('click', () => finishTurnButtonOnClick())
 }
 
 
