@@ -8,6 +8,7 @@ let moveList = []
 let becomeKing = false
 let killed = []
 let whoseTurn = 'w'
+let buttonsVisible = false
 
 const CELL_STATE = {
     DEFAULT: 0,
@@ -115,6 +116,19 @@ const renderTurn = () => {
     statusStr.innerText = whoseTurn === 'w'?
         'Ходят белые' :
         'Ходят чёрные'
+}
+
+
+const renderButtons = () => {
+    if (buttonsVisible) {
+        cancelTurnButton.removeAttribute('class')
+        finishTurnButton.removeAttribute('class')
+    }
+
+    else {
+        cancelTurnButton.className = 'hidden'
+        finishTurnButton.className = 'hidden'
+    }
 }
 
 
@@ -322,6 +336,8 @@ const togglePromptMode = cell => {
 
         for (dest of dests)
             dest.dest.state = dest.state
+
+        buttonsVisible = true
     }
 
     let changedCells = dests.map(dest => dest.dest)
@@ -374,6 +390,7 @@ const cellOnClick = (row, col) => {
     }
 
     changedCells?.forEach(cell => renderCell(cell.row, cell.col))
+    renderButtons()
 }
 
 
@@ -418,10 +435,12 @@ const example1Arrangement = () => {
 const arrangementButtonOnClick = (arrangement) => {
     arrangement()
     inPromptMode = null
+    buttonsVisible = false
     calculateSituation()
 
     renderBoard()
     renderTurn()
+    renderButtons()
     moveListView.innerHTML = ''
 }
 
@@ -470,6 +489,9 @@ const cancelTurnButtonOnClick = () => {
         killed = []
         calculateSituation()
     }
+
+    buttonsVisible = false
+    renderButtons()
 }
 
 
@@ -492,10 +514,21 @@ const finishTurnButtonOnClick = () => {
 
     toggleTurn()
     renderTurn()
+
+    buttonsVisible = false
+    renderButtons()
+}
+
+
+const moveListViewOnCopy = event => {
+    event.preventDefault()
+    event.clipboardData.setData('text', document.getSelection().toString().split('\n').map((line, index) => (index + 1) + '. ' + line).join('\n'))
 }
 
 
 const init = () => {
+    renderButtons()
+
     for (let row = 0; row < BOARD_SIZE; row++)
         for (let col = 0; col < BOARD_SIZE; col++)
             if (isPlayCell(row, col))
@@ -523,6 +556,7 @@ const init = () => {
     example1button.addEventListener('click', () => arrangementButtonOnClick(example1Arrangement))
     cancelTurnButton.addEventListener('click', () => cancelTurnButtonOnClick())
     finishTurnButton.addEventListener('click', () => finishTurnButtonOnClick())
+    moveListView.addEventListener('copy', event => moveListViewOnCopy(event))
 }
 
 

@@ -46,6 +46,10 @@ header h1 {
     color: var(--light-light-blue-but-gray);
 }
 
+.hidden {
+    visibility: hidden;
+}
+
 nav {
     position: fixed;
     width: 15%;
