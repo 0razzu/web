@@ -9,6 +9,8 @@ let becomeKing = false
 let killed = []
 let whoseTurn = 'w'
 let buttonsVisible = false
+let whiteCounter = 0
+let blackCounter = 0
 
 const CELL_STATE = {
     DEFAULT: 0,
@@ -113,9 +115,11 @@ const toggleTurn = () => {
 
 
 const renderTurn = () => {
-    statusStr.innerText = whoseTurn === 'w'?
-        'Ходят белые' :
-        'Ходят чёрные'
+    if (whiteCounter === 0 || blackCounter === 0)
+        statusStr.innerText = 'Выиграли ' + (whoseTurn === 'w'? 'чёрные' : 'белые')
+
+    else
+        statusStr.innerText = 'Ходят ' + (whoseTurn === 'w'? 'белые' : 'чёрные')
 }
 
 
@@ -431,10 +435,26 @@ const example1Arrangement = () => {
 }
 
 
+const countCheckers = () => {
+    whiteCounter = 0
+    blackCounter = 0
+
+    for (let row = 0; row < BOARD_SIZE; row++)
+        for (let col = 0; col < BOARD_SIZE; col++) {
+            if (isWhite(row, col))
+                whiteCounter++
+
+            else if (isBlack(row, col))
+                blackCounter++
+        }
+}
+
+
 const arrangementButtonOnClick = (arrangement) => {
     arrangement()
     inPromptMode = null
     buttonsVisible = false
+    countCheckers()
     calculateSituation()
 
     renderBoard()
@@ -508,6 +528,11 @@ const finishTurnButtonOnClick = () => {
         BOARD[row][col].state = CELL_STATE.DEFAULT
         renderCell(row, col)
     }
+
+    if (whoseTurn === 'w')
+        blackCounter -= killed.length
+    else
+        whiteCounter -= killed.length
 
     killed = []
 
