@@ -241,14 +241,13 @@ const calculateSituation = () => {
                             if (foe !== null) {
                                 addToSituation(BOARD[row][col], BOARD[rowTo][colTo], CELL_STATE.MUST_BE_FILLED, foe)
                                 foundMustBeFilled = true
-                                break
                             }
 
                             else if (!foundMustBeFilled)
                                 addToSituation(BOARD[row][col], BOARD[rowTo][colTo], CELL_STATE.CAN_BE_FILLED)
                         }
 
-                        else if (areFoes(row, col, rowTo, colTo))
+                        else if (foe === null && areFoes(row, col, rowTo, colTo))
                             foe = BOARD[rowTo][colTo]
 
                         else
