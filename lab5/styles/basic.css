@@ -249,13 +249,17 @@ button:active {
 
 .game-history {
     height: 70vh;
-    overflow-y: auto;
     flex-grow: 1;
     margin-left: 5rem;
 }
 
 .game-history h3 {
     margin-left: 2.5rem;
+}
+
+#move-list {
+    overflow-y: auto;
+    height: calc(100% - 5rem);
 }
 
 footer {

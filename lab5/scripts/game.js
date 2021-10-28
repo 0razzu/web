@@ -118,6 +118,32 @@ const renderTurn = () => {
 }
 
 
+const cellToString = cell => {
+    const letters = 'abcdefgh'
+
+    return letters[cell.col] + (cell.row + 1)
+}
+
+
+const renderMoveList = () => {
+    const delimeter = killed.length === 0? '-' : ':'
+
+    if (whoseTurn === 'w') {
+        const turnView = document.createElement('li')
+        turnView.appendChild(document.createTextNode(moveList.map(cell => cellToString(cell)).join(delimeter)))
+        moveListView.appendChild(turnView)
+    }
+
+    else {
+        const moveViews = moveListView.getElementsByTagName('li')
+        turnView = moveViews[moveViews.length - 1]
+        turnView.textContent += ' ' + moveList.map(cell => cellToString(cell)).join(delimeter)
+    }
+
+    moveListView.scrollTop = moveListView.scrollHeight
+}
+
+
 const isWhite = (row, col) => {
     const type = BOARD[row][col]?.checker?.type
 
@@ -451,7 +477,7 @@ const finishTurnButtonOnClick = () => {
     if (moveList.length === 0 || inPromptMode !== null)
         return
 
-    // TODO renderMoveList
+    renderMoveList()
     moveList = []
     becomeKing = false
     
