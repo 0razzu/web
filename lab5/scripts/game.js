@@ -153,7 +153,7 @@ const renderMoveList = () => {
 
     else {
         const moveViews = moveListView.getElementsByTagName('li')
-        turnView = moveViews[moveViews.length - 1]
+        const turnView = moveViews[moveViews.length - 1]
         turnView.textContent += ' ' + moveList.map(cell => cellToString(cell)).join(delimeter)
     }
 
@@ -347,6 +347,19 @@ const togglePromptMode = cell => {
 }
 
 
+const makeKingIfNeeded = cell => {
+    if (whoseTurn === 'w' && cell.row === BOARD_SIZE - 1) {
+        cell.checker.type = CHECKER_TYPE.WHITE_KING
+        becomeKing = true
+    }
+
+    else if (whoseTurn === 'b' && cell.row === 0) {
+        cell.checker.type = CHECKER_TYPE.BLACK_KING
+        becomeKing = true
+    }
+}
+
+
 const cellOnClick = (row, col) => {
     let changedCells
     let targetCell = BOARD[row][col]
@@ -358,7 +371,9 @@ const cellOnClick = (row, col) => {
         moveList = [inPromptMode]
         changedCells = togglePromptMode(inPromptMode)
         move(moveList[0].row, moveList[0].col, row, col)
-        moveList[1] = BOARD[row][col]
+        moveList[1] = targetCell
+
+        makeKingIfNeeded(targetCell)
     }
 
     else if (targetCell.state === CELL_STATE.MUST_BE_FILLED) {
@@ -370,15 +385,7 @@ const cellOnClick = (row, col) => {
             moveList = [wasInPromptMode]
         moveList.push(BOARD[row][col])
 
-        if (whoseTurn === 'w' && row === BOARD_SIZE - 1) {
-            targetCell.checker.type = CHECKER_TYPE.WHITE_KING
-            becomeKing = true
-        }
-
-        else if (whoseTurn === 'b' && row === 0) {
-            targetCell.checker.type = CHECKER_TYPE.BLACK_KING
-            becomeKing = true
-        }
+        makeKingIfNeeded(targetCell)
 
         const killedCell = SITUATION.get(BOARD[wasInPromptMode.row][wasInPromptMode.col]).filter(dest => dest.dest.row === row && dest.dest.col === col)[0].foe
         killedCell.state = CELL_STATE.KILLED
@@ -397,17 +404,10 @@ const cellOnClick = (row, col) => {
 
 
 const startArrangement = () => {
-    whoseTurn = 'w'
-
     for (let row = 0; row < 3; row++)
         for (let col = 0; col < BOARD_SIZE; col++)
             if (isPlayCell(row, col))
                 place(CHECKER_TYPE.WHITE, row, col)
-
-    for (let row = 3; row < 5; row++)
-        for (let col = 0; col < BOARD_SIZE; col++)
-            if (isPlayCell(row, col))
-                clear(row, col)
 
     for (let row = 5; row < BOARD_SIZE; row++)
         for (let col = 0; col < BOARD_SIZE; col++)
@@ -452,16 +452,15 @@ const countCheckers = () => {
 const resetEverything = () => {
     for (let row = 0; row < BOARD_SIZE; row++)
         for (let col = 0; col < BOARD_SIZE; col++)
-            if (isPlayCell(row, col)) {
-                clear(row, col)
+            if (isPlayCell(row, col))
                 BOARD[row][col].state = CELL_STATE.DEFAULT
-            }
 
     SITUATION.clear()
     inPromptMode = null
     moveList = []
     becomeKing = false
     killed = []
+    whoseTurn = 'w'
     buttonsVisible = false
 }
 
