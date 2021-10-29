@@ -1,6 +1,5 @@
 const BOARD_SIZE = 8
 const BOARD = Array.from(Array(BOARD_SIZE), () => Array(BOARD_SIZE))
-const BOARD_BACKUP = Array.from(Array(BOARD_SIZE), () => Array(BOARD_SIZE))
 let BOARD_VIEW
 let SITUATION = new Map()
 let inPromptMode = null
@@ -114,7 +113,7 @@ const toggleTurn = () => {
 }
 
 
-const renderTurn = () => {
+const renderStatus = () => {
     if (whiteCounter === 0 || blackCounter === 0)
         statusStr.innerText = 'Выиграли ' + (whoseTurn === 'w'? 'чёрные' : 'белые')
 
@@ -339,8 +338,6 @@ const togglePromptMode = cell => {
 
         for (dest of dests)
             dest.dest.state = dest.state
-
-        buttonsVisible = true
     }
 
     let changedCells = dests.map(dest => dest.dest)
@@ -391,6 +388,8 @@ const cellOnClick = (row, col) => {
         calculateSituation()
         changedCells = changedCells.concat(togglePromptMode(targetCell))
     }
+
+    buttonsVisible = (moveList.length !== 0)
 
     changedCells?.forEach(cell => renderCell(cell.row, cell.col))
     renderButtons()
@@ -450,17 +449,37 @@ const countCheckers = () => {
 }
 
 
-const arrangementButtonOnClick = (arrangement) => {
-    arrangement()
-    inPromptMode = null
-    buttonsVisible = false
-    countCheckers()
-    calculateSituation()
+const resetEverything = () => {
+    for (let row = 0; row < BOARD_SIZE; row++)
+        for (let col = 0; col < BOARD_SIZE; col++)
+            if (isPlayCell(row, col)) {
+                clear(row, col)
+                BOARD[row][col].state = CELL_STATE.DEFAULT
+            }
 
+    SITUATION.clear()
+    inPromptMode = null
+    moveList = []
+    becomeKing = false
+    killed = []
+    buttonsVisible = false
+}
+
+
+const renderEverything = () => {
     renderBoard()
-    renderTurn()
+    renderStatus()
     renderButtons()
     moveListView.innerHTML = ''
+}
+
+
+const arrangementButtonOnClick = arrangement => {
+    resetEverything()
+    arrangement()
+    countCheckers()
+    calculateSituation()
+    renderEverything()
 }
 
 
@@ -537,7 +556,7 @@ const finishTurnButtonOnClick = () => {
     killed = []
 
     toggleTurn()
-    renderTurn()
+    renderStatus()
 
     buttonsVisible = false
     renderButtons()
