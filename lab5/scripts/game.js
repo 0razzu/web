@@ -457,8 +457,10 @@ const countCheckers = () => {
 const resetEverything = () => {
     for (let row = 0; row < BOARD_SIZE; row++)
         for (let col = 0; col < BOARD_SIZE; col++)
-            if (isPlayCell(row, col))
+            if (isPlayCell(row, col)) {
                 BOARD[row][col].state = CELL_STATE.DEFAULT
+                clear(row, col)
+            }
 
     SITUATION.clear()
     inPromptMode = null
