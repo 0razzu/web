@@ -360,8 +360,8 @@ const makeKingIfNeeded = cell => {
 }
 
 
-const cellOnClick = (row, col) => {
-    let changedCells
+const hintOrMove = (row, col) => {
+    let changedCells = []
     let targetCell = BOARD[row][col]
 
     if (inPromptMode === null || (moveList.length === 0 && inPromptMode === targetCell))
@@ -398,7 +398,12 @@ const cellOnClick = (row, col) => {
 
     buttonsVisible = (moveList.length !== 0)
 
-    changedCells?.forEach(cell => renderCell(cell.row, cell.col))
+    return changedCells
+}
+
+
+const cellOnClick = (row, col) => {
+    hintOrMove(row, col).forEach(cell => renderCell(cell.row, cell.col))
     renderButtons()
 }
 
@@ -482,15 +487,13 @@ const arrangementButtonOnClick = arrangement => {
 }
 
 
-const cancelTurnButtonOnClick = () => {
-    if (moveList.length === 0 && inPromptMode === null)
-        return
-
+const cancelTurn = () => {
+    const changedCells = []
     const curCell = moveList.length === 0? inPromptMode : moveList[moveList.length - 1]
 
     SITUATION.get(curCell)?.forEach(dest => {
         dest.dest.state = CELL_STATE.DEFAULT
-        renderCell(dest.dest.row, dest.dest.col)
+        changedCells.push(dest.dest)
     })
 
     if (moveList.length !== 0) {
@@ -503,32 +506,69 @@ const cancelTurnButtonOnClick = () => {
         curCell.checker = null
         curCell.state = CELL_STATE.DEFAULT
 
-        renderCell(moveList[0].row, moveList[0].col)
-        renderCell(curCell.row, curCell.col)
-
-        moveList = []
+        changedCells.push(moveList[0])
+        changedCells.push(curCell)
     }
 
     else {
         inPromptMode.state = CELL_STATE.DEFAULT
-        renderCell(inPromptMode.row, inPromptMode.col)
+        changedCells.push(inPromptMode)
     }
-
-    inPromptMode = null
 
     if (killed.length !== 0) {
         for (cell of killed) {
-            const {row, col} = cell
-            BOARD[row][col].state = CELL_STATE.DEFAULT
-            renderCell(row, col)
+            cell.state = CELL_STATE.DEFAULT
+            changedCells.push(cell)
         }
+    }
+    
+    return changedCells
+}
 
-        killed = []
-        calculateSituation()
+
+const clearAfterTurnCancel = () => {
+    moveList = []
+    inPromptMode = null
+    killed = []
+    buttonsVisible = false
+}
+
+
+const cancelTurnButtonOnClick = () => {
+    if (moveList.length === 0 && inPromptMode === null)
+        return
+
+    cancelTurn().forEach(cell => renderCell(cell.row, cell.col))
+
+    clearAfterTurnCancel()
+
+    calculateSituation()
+
+    renderButtons()
+}
+
+
+const finishTurn = () => {
+    for (cell of killed) {
+        const {row, col} = cell
+        clear(row, col)
+        BOARD[row][col].state = CELL_STATE.DEFAULT
     }
 
+    if (whoseTurn === 'w')
+        blackCounter -= killed.length
+    else
+        whiteCounter -= killed.length
+
+    toggleTurn()
+}
+
+
+const clearAfterTurnFinish = () => {
+    moveList = []
+    becomeKing = false
+    killed = []
     buttonsVisible = false
-    renderButtons()
 }
 
 
@@ -537,27 +577,15 @@ const finishTurnButtonOnClick = () => {
         return
 
     renderMoveList()
-    moveList = []
-    becomeKing = false
+
+    finishTurn()
     
-    for (cell of killed) {
-        const {row, col} = cell
-        clear(row, col)
-        BOARD[row][col].state = CELL_STATE.DEFAULT
-        renderCell(row, col)
-    }
+    for (cell of killed)
+        renderCell(cell.row, cell.col)
 
-    if (whoseTurn === 'w')
-        blackCounter -= killed.length
-    else
-        whiteCounter -= killed.length
+    clearAfterTurnFinish()
 
-    killed = []
-
-    toggleTurn()
     renderStatus()
-
-    buttonsVisible = false
     renderButtons()
 }
 
