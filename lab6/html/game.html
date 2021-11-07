@@ -1,0 +1,177 @@
+<!DOCTYPE HTML>
+<html lang="ru">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="rating" content="General">
+        <link rel="stylesheet" href="../styles/basic.css">
+        <title>Шашки онлайн</title>
+    </head>
+
+    <body>
+        <header>
+            <a href="#"><h1>Шашки онлайн</h1></a>
+        </header>
+
+        <nav>
+            <div><a href="index.html">Главная</a></div>
+            <div><a href="rules.html">Правила</a></div>
+            <div><a href="game.html" class="current-page-link">Играть</a></div>
+        </nav>
+
+        <main>
+            <h2>Игра</h2>
+            <div class="game-page-content">
+                <table class="board">
+                    <tbody>
+                        <tr>
+                            <th></th>
+                            <th>a</th>
+                            <th>b</th>
+                            <th>c</th>
+                            <th>d</th>
+                            <th>e</th>
+                            <th>f</th>
+                            <th>g</th>
+                            <th>h</th>
+                            <th></th>
+                        </tr>
+                        <tr>
+                            <th>8</th>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <th>8</th>
+                        </tr>
+                        <tr>
+                            <th>7</th>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <th>7</th>
+                        </tr>
+                        <tr>
+                            <th>6</th>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <th>6</th>
+                        </tr>
+                        <tr>
+                            <th>5</th>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <th>5</th>
+                        </tr>
+                        <tr>
+                            <th>4</th>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <th>4</th>
+                        </tr>
+                        <tr>
+                            <th>3</th>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <th>3</th>
+                        </tr>
+                        <tr>
+                            <th>2</th>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <th>2</th>
+                        </tr>
+                        <tr>
+                            <th>1</th>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <th>1</th>
+                        </tr>
+                        <tr>
+                            <th></th>
+                            <th>a</th>
+                            <th>b</th>
+                            <th>c</th>
+                            <th>d</th>
+                            <th>e</th>
+                            <th>f</th>
+                            <th>g</th>
+                            <th>h</th>
+                            <th></th>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <article class="status-and-buttons">
+                    <h3 id="status">Ходят белые</h3>
+                    <div class="buttons">
+                        <button id="start">Начало</button>
+                        <button id="example1">Пример 1</button>
+                        <button id="cancel-turn">Отменить ход</button>
+                        <button id="finish-turn">Завершить ход</button>
+                    </div>
+                </article>
+
+                <article class="game-history">
+                    <h3>Ходы</h3>
+                    <ol id="move-list">
+                    </ol>
+                </article>
+            </div>
+        </main>
+
+        <footer>
+            <section>
+                <p>&copy Дмитрий Патока, 2021</p>
+                <p><a href="mailto:dmitrypatoka@ya.ru?subject=Шашки онлайн">dmitrypatoka@ya.ru</a></p>
+            </section>
+        </footer>
+
+        <script src="../scripts/game.js" defer></script>
+    </body>
+</html>
