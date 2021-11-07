@@ -52,6 +52,7 @@ const finishTurnButton = document.getElementById('finish-turn')
 const moveListView = document.getElementById('move-list')
 const moveListInputPanel = document.getElementById('move-list-input-panel')
 const moveListInput = document.getElementById('move-list-input')
+const showTurnsButton = document.getElementById('show-turns')
 
 
 const isPlayCell = (row, col) => (row + col) % 2 === 0
@@ -142,6 +143,13 @@ const cellToString = cell => {
     const letters = 'abcdefgh'
 
     return letters[cell.col] + (cell.row + 1)
+}
+
+
+const stringToCell = string => {
+    const letters = 'abcdefgh'
+
+    return BOARD[Number(string[1]) - 1][letters.indexOf(string[0])]
 }
 
 
@@ -405,6 +413,22 @@ const hintOrMove = (row, col) => {
 }
 
 
+const performTurns = turns => {
+    for (let turn of turns) {
+        console.log(`line ${turn.line}`)
+
+        console.log('white')
+        for (let cell of turn.white)
+            console.log(cell)
+
+        console.log('black')
+        if (turn.black)
+            for (let cell of turn.black)
+                console.log(cell)
+    }
+}
+
+
 const cellOnClick = (row, col) => {
     hintOrMove(row, col).forEach(cell => renderCell(cell.row, cell.col))
     renderButtons()
@@ -625,6 +649,20 @@ const moveListViewOnCopy = event => {
 }
 
 
+const showTurnsButtonOnClick = () => {
+    const turns = moveListInput.value.split('\n').map(line => line.split(' ')).map(turn => ({
+        line: turn[0]?.slice(0, -1),
+        white: turn[1]?.split(/-|:/).map(cellStr => stringToCell(cellStr)),
+        black: turn[2]?.split(/-|:/).map(cellStr => stringToCell(cellStr))
+    }))
+
+    performTurns(turns)
+
+    toggleInputTurnsButtonCaption()
+    toggleMoveListViewAndInputVisibility()
+}
+
+
 const init = () => {
     renderButtons()
 
@@ -657,6 +695,7 @@ const init = () => {
     cancelTurnButton.addEventListener('click', () => cancelTurnButtonOnClick())
     finishTurnButton.addEventListener('click', () => finishTurnButtonOnClick())
     moveListView.addEventListener('copy', event => moveListViewOnCopy(event))
+    showTurnsButton.addEventListener('click', () => showTurnsButtonOnClick())
 }
 
 
