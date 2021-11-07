@@ -46,9 +46,11 @@ const CHECKER_COLOR = {
 const statusStr = document.getElementById('status')
 const startButton = document.getElementById('start')
 const example1button = document.getElementById('example1')
+const inputTurnsButton = document.getElementById('input-turns')
 const cancelTurnButton = document.getElementById('cancel-turn')
 const finishTurnButton = document.getElementById('finish-turn')
 const moveListView = document.getElementById('move-list')
+const moveListInput = document.getElementById('move-list-input')
 
 
 const isPlayCell = (row, col) => (row + col) % 2 === 0
@@ -489,6 +491,24 @@ const arrangementButtonOnClick = arrangement => {
 }
 
 
+const toggleMoveListViewAndInputVisibility = () => {
+    if (moveListView.classList.contains('removed')) {
+        moveListView.removeAttribute('class')
+        moveListInput.className = 'removed'
+    }
+
+    else {
+        moveListView.className = 'removed'
+        moveListInput.removeAttribute('class')
+    }
+}
+
+
+const inputTurnsButtonOnClick = () => {
+    toggleMoveListViewAndInputVisibility()
+}
+
+
 const cancelTurn = () => {
     const changedCells = []
     const curCell = moveList.length === 0? inPromptMode : moveList[moveList.length - 1]
@@ -626,6 +646,7 @@ const init = () => {
 
     startButton.addEventListener('click', () => arrangementButtonOnClick(startArrangement))
     example1button.addEventListener('click', () => arrangementButtonOnClick(example1Arrangement))
+    inputTurnsButton.addEventListener('click', () => inputTurnsButtonOnClick())
     cancelTurnButton.addEventListener('click', () => cancelTurnButtonOnClick())
     finishTurnButton.addEventListener('click', () => finishTurnButtonOnClick())
     moveListView.addEventListener('copy', event => moveListViewOnCopy(event))

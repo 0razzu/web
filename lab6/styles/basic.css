@@ -50,6 +50,10 @@ header h1 {
     visibility: hidden;
 }
 
+.removed {
+    display: none;
+}
+
 nav {
     position: fixed;
     width: 15%;
@@ -255,16 +259,18 @@ button:active {
 .game-history {
     height: 70vh;
     flex-grow: 1;
-    margin-left: 5rem;
-}
-
-.game-history h3 {
-    margin-left: 2.5rem;
+    margin-left: 7.5rem;
 }
 
 #move-list {
     overflow-y: auto;
     height: calc(100% - 5rem);
+    margin-left: -2.5rem;
+}
+
+#move-list-input {
+    height: calc(100% - 5rem) !important;
+    width: 100% !important;
 }
 
 footer {
