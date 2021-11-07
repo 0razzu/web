@@ -275,10 +275,21 @@ textarea {
     margin-left: -2.5rem;
 }
 
+#move-list-input-panel {
+    height: calc(100% - 5rem);
+    width: 100%;
+    margin-bottom: 1rem;
+}
+
 #move-list-input {
-    height: calc(100% - 6.2rem);
-    padding: .5rem;
+    display: block;
+    height: calc(100% - 4.025rem);
     width: calc(100% - 1.2rem);
+    padding: .5rem;
+}
+
+#move-list-input-panel button {
+    margin: .5rem 0 0;
 }
 
 footer {

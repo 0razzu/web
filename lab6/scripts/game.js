@@ -50,6 +50,7 @@ const inputTurnsButton = document.getElementById('input-turns')
 const cancelTurnButton = document.getElementById('cancel-turn')
 const finishTurnButton = document.getElementById('finish-turn')
 const moveListView = document.getElementById('move-list')
+const moveListInputPanel = document.getElementById('move-list-input-panel')
 const moveListInput = document.getElementById('move-list-input')
 
 
@@ -491,20 +492,26 @@ const arrangementButtonOnClick = arrangement => {
 }
 
 
+const toggleInputTurnsButtonCaption = () => {
+    inputTurnsButton.innerText = inputTurnsButton.innerText === 'Ввести ходы'? 'Отмена' : 'Ввести ходы'
+}
+
+
 const toggleMoveListViewAndInputVisibility = () => {
     if (moveListView.classList.contains('removed')) {
         moveListView.removeAttribute('class')
-        moveListInput.className = 'removed'
+        moveListInputPanel.className = 'removed'
     }
 
     else {
         moveListView.className = 'removed'
-        moveListInput.removeAttribute('class')
+        moveListInputPanel.removeAttribute('class')
     }
 }
 
 
 const inputTurnsButtonOnClick = () => {
+    toggleInputTurnsButtonCaption()
     toggleMoveListViewAndInputVisibility()
 }
 
