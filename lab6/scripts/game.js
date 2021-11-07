@@ -650,11 +650,23 @@ const moveListViewOnCopy = event => {
 
 
 const showTurnsButtonOnClick = () => {
-    const turns = moveListInput.value.split('\n').map(line => line.split(' ')).map(turn => ({
-        line: turn[0]?.slice(0, -1),
-        white: turn[1]?.split(/-|:/).map(cellStr => stringToCell(cellStr)),
-        black: turn[2]?.split(/-|:/).map(cellStr => stringToCell(cellStr))
-    }))
+    const lines = moveListInput.value.split('\n')
+    let turns = []
+
+    for (let line of lines) {
+        const splitLine = line.split(' ')
+
+        try {
+            turns.push({
+                line: splitLine[0]?.slice(0, -1),
+                white: splitLine[1]?.split(/-|:/).map(cellStr => stringToCell(cellStr)),
+                black: splitLine[2]?.split(/-|:/).map(cellStr => stringToCell(cellStr))
+            })
+        } catch (e) {
+            alert(`line «${line}» is absolutely terrible: ${e}`)
+            return
+        }
+    }
 
     performTurns(turns)
 
