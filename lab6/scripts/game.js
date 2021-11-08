@@ -55,7 +55,7 @@ const moveListInput = document.getElementById('move-list-input')
 const showTurnsButton = document.getElementById('show-turns')
 
 
-const isPlayCell = (row, col) => (row + col) % 2 === 0
+const isPlayCell = (row, col) => (row + col) % 2 === 0 && row >= 0 && row < BOARD_SIZE && col >= 0 && col < BOARD_SIZE
 
 
 const hasChecker = (row, col) => BOARD[row][col]?.checker != null
@@ -151,7 +151,7 @@ const stringToCell = string => {
     const row = Number(string[1]) - 1
     const col = letters.indexOf(string[0])
 
-    if (row < 0 || row >= BOARD_SIZE || col < 0 || col >= BOARD_SIZE)
+    if (!isPlayCell(row, col))
         throw new RangeError("No such cell")
 
     return BOARD[row][col]
@@ -377,6 +377,8 @@ const makeKingIfNeeded = cell => {
 
 
 const hintOrMove = (row, col) => {
+    console.log(`hintOrMove(${row}, ${col})`)
+
     let changedCells = []
     let targetCell = BOARD[row][col]
 
@@ -426,13 +428,22 @@ const performTurns = turns => {
             console.log(`line ${turn.line}`) // ?
 
             console.log('white')
-            for (let cell of turn.white)
+            turn.white.forEach(cell => {
                 console.log(cell)
+                hintOrMove(cell.row, cell.col)
+            })
+            finishTurn()
+            clearAfterTurnFinish()
 
             console.log('black')
-            if (turn.black)
-                for (let cell of turn.black)
+            if (turn.black) {
+                turn.black.forEach(cell => {
                     console.log(cell)
+                    hintOrMove(cell.row, cell.col)
+                })
+                finishTurn()
+                clearAfterTurnFinish()
+            }
         } catch (e) {
             return lineIndex
         }
@@ -681,11 +692,12 @@ const showTurnsButtonOnClick = () => {
     }
 
     if (!errorLine) {
-        let errorLineIndex = performTurns(turns)
+        arrangementButtonOnClick(startArrangement)
 
-        if (errorLineIndex)
-            errorLine = lines[errorLineIndex]
+        errorLine = lines[performTurns(turns)]
     }
+
+    renderEverything()
 
     if (errorLine) {
         alert(`line «${errorLine}» is absolutely terrible`)
