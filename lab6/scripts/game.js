@@ -377,8 +377,6 @@ const makeKingIfNeeded = cell => {
 
 
 const hintOrMove = (row, col) => {
-    console.log(`hintOrMove(${row}, ${col})`)
-
     let changedCells = []
     let targetCell = BOARD[row][col]
 
@@ -423,26 +421,33 @@ const hintOrMove = (row, col) => {
 const performTurns = turns => {
     for (let lineIndex = 0; lineIndex < turns.length; lineIndex++) {
         const turn = turns[lineIndex]
+        let changedCells = []
 
         try {
-            console.log(`line ${turn.line}`) // ?
-
-            console.log('white')
             turn.white.forEach(cell => {
-                console.log(cell)
-                hintOrMove(cell.row, cell.col)
+                changedCells = hintOrMove(cell.row, cell.col)
             })
+
+            if (changedCells.length === 0)
+                throw new Error('Useless click')
+
+            renderMoveList()
             finishTurn()
             clearAfterTurnFinish()
+            changedCells = []
 
-            console.log('black')
             if (turn.black) {
                 turn.black.forEach(cell => {
-                    console.log(cell)
-                    hintOrMove(cell.row, cell.col)
+                    changedCells = hintOrMove(cell.row, cell.col)
                 })
+
+                if (changedCells.length === 0)
+                    throw new Error('Useless click')
+                
+                renderMoveList()
                 finishTurn()
                 clearAfterTurnFinish()
+                changedCells = []
             }
         } catch (e) {
             return lineIndex
@@ -525,7 +530,6 @@ const renderEverything = () => {
     renderBoard()
     renderStatus()
     renderButtons()
-    moveListView.innerHTML = ''
 }
 
 
@@ -535,6 +539,7 @@ const arrangementButtonOnClick = arrangement => {
     countCheckers()
     calculateSituation()
     renderEverything()
+    moveListView.innerHTML = ''
 }
 
 
