@@ -148,24 +148,29 @@ const cellToString = cell => {
 
 const stringToCell = string => {
     const letters = 'abcdefgh'
+    const row = Number(string[1]) - 1
+    const col = letters.indexOf(string[0])
 
-    return BOARD[Number(string[1]) - 1][letters.indexOf(string[0])]
+    if (row < 0 || row >= BOARD_SIZE || col < 0 || col >= BOARD_SIZE)
+        throw new RangeError("No such cell")
+
+    return BOARD[row][col]
 }
 
 
 const renderMoveList = () => {
-    const delimeter = killed.length === 0? '-' : ':'
+    const delimiter = killed.length === 0? '-' : ':'
 
     if (whoseTurn === 'w') {
         const turnView = document.createElement('li')
-        turnView.appendChild(document.createTextNode(moveList.map(cell => cellToString(cell)).join(delimeter)))
+        turnView.appendChild(document.createTextNode(moveList.map(cell => cellToString(cell)).join(delimiter)))
         moveListView.appendChild(turnView)
     }
 
     else {
         const moveViews = moveListView.getElementsByTagName('li')
         const turnView = moveViews[moveViews.length - 1]
-        turnView.textContent += ' ' + moveList.map(cell => cellToString(cell)).join(delimeter)
+        turnView.textContent += ' ' + moveList.map(cell => cellToString(cell)).join(delimiter)
     }
 
     moveListView.scrollTop = moveListView.scrollHeight
@@ -414,17 +419,23 @@ const hintOrMove = (row, col) => {
 
 
 const performTurns = turns => {
-    for (let turn of turns) {
-        console.log(`line ${turn.line}`)
+    for (let lineIndex = 0; lineIndex < turns.length; lineIndex++) {
+        const turn = turns[lineIndex]
 
-        console.log('white')
-        for (let cell of turn.white)
-            console.log(cell)
+        try {
+            console.log(`line ${turn.line}`) // ?
 
-        console.log('black')
-        if (turn.black)
-            for (let cell of turn.black)
+            console.log('white')
+            for (let cell of turn.white)
                 console.log(cell)
+
+            console.log('black')
+            if (turn.black)
+                for (let cell of turn.black)
+                    console.log(cell)
+        } catch (e) {
+            return lineIndex
+        }
     }
 }
 
@@ -652,6 +663,7 @@ const moveListViewOnCopy = event => {
 const showTurnsButtonOnClick = () => {
     const lines = moveListInput.value.split('\n')
     let turns = []
+    let errorLine = null
 
     for (let line of lines) {
         const splitLine = line.split(' ')
@@ -663,12 +675,22 @@ const showTurnsButtonOnClick = () => {
                 black: splitLine[2]?.split(/-|:/).map(cellStr => stringToCell(cellStr))
             })
         } catch (e) {
-            alert(`line «${line}» is absolutely terrible: ${e}`)
-            return
+            errorLine = line
+            break
         }
     }
 
-    performTurns(turns)
+    if (!errorLine) {
+        let errorLineIndex = performTurns(turns)
+
+        if (errorLineIndex)
+            errorLine = lines[errorLineIndex]
+    }
+
+    if (errorLine) {
+        alert(`line «${errorLine}» is absolutely terrible`)
+        return
+    }
 
     toggleInputTurnsButtonCaption()
     toggleMoveListViewAndInputVisibility()
