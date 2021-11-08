@@ -418,37 +418,31 @@ const hintOrMove = (row, col) => {
 }
 
 
+const performHalfTurn = halfTurn => {
+    let changedCells = []
+
+    halfTurn.forEach(cell => {
+        changedCells = hintOrMove(cell.row, cell.col)
+    })
+
+    if (changedCells.length === 0)
+        throw new Error('Useless click')
+
+    renderMoveList()
+    finishTurn()
+    clearAfterTurnFinish()
+}
+
+
 const performTurns = turns => {
     for (let lineIndex = 0; lineIndex < turns.length; lineIndex++) {
         const turn = turns[lineIndex]
-        let changedCells = []
 
         try {
-            turn.white.forEach(cell => {
-                changedCells = hintOrMove(cell.row, cell.col)
-            })
+            performHalfTurn(turn.white)
 
-            if (changedCells.length === 0)
-                throw new Error('Useless click')
-
-            renderMoveList()
-            finishTurn()
-            clearAfterTurnFinish()
-            changedCells = []
-
-            if (turn.black) {
-                turn.black.forEach(cell => {
-                    changedCells = hintOrMove(cell.row, cell.col)
-                })
-
-                if (changedCells.length === 0)
-                    throw new Error('Useless click')
-                
-                renderMoveList()
-                finishTurn()
-                clearAfterTurnFinish()
-                changedCells = []
-            }
+            if (turn.black)
+                performHalfTurn(turn.black)
         } catch (e) {
             return lineIndex
         }
@@ -677,12 +671,19 @@ const moveListViewOnCopy = event => {
 
 
 const showTurnsButtonOnClick = () => {
-    const lines = moveListInput.value.split('\n')
+    const lines = moveListInput.value.split('\n').filter(line => line !== '')
+    moveListInput.value = lines.join('\n')
     let turns = []
     let errorLine = null
 
-    for (let line of lines) {
-        const splitLine = line.split(' ')
+    for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
+        const line = lines[lineIndex]
+        const splitLine = line.trim().split(/\s+/)
+
+        if (splitLine.length !== 3 && (splitLine !== 2 || lineIndex !== lines.length - 1)) {
+            errorLine = line
+            break
+        }
 
         try {
             turns.push({
@@ -696,7 +697,7 @@ const showTurnsButtonOnClick = () => {
         }
     }
 
-    if (!errorLine) {
+    if (errorLine == null) {
         arrangementButtonOnClick(startArrangement)
 
         errorLine = lines[performTurns(turns)]
@@ -704,7 +705,7 @@ const showTurnsButtonOnClick = () => {
 
     renderEverything()
 
-    if (errorLine) {
+    if (errorLine != null) {
         alert(`line «${errorLine}» is absolutely terrible`)
         return
     }
