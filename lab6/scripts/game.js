@@ -53,6 +53,7 @@ const moveListView = document.getElementById('move-list')
 const moveListInputPanel = document.getElementById('move-list-input-panel')
 const moveListInput = document.getElementById('move-list-input')
 const showTurnsButton = document.getElementById('show-turns')
+const errorField = document.getElementById('error-field')
 
 
 const isPlayCell = (row, col) => (row + col) % 2 === 0 && row >= 0 && row < BOARD_SIZE && col >= 0 && col < BOARD_SIZE
@@ -152,7 +153,7 @@ const stringToCell = string => {
     const col = letters.indexOf(string[0])
 
     if (!isPlayCell(row, col))
-        throw new RangeError("No such cell")
+        return null
 
     return BOARD[row][col]
 }
@@ -441,7 +442,7 @@ const performTurns = turns => {
         try {
             performHalfTurn(turn.white)
 
-            if (turn.black)
+            if (turn.black !== undefined)
                 performHalfTurn(turn.black)
         } catch (e) {
             return lineIndex
@@ -542,6 +543,26 @@ const toggleInputTurnsButtonCaption = () => {
 }
 
 
+const clearErrorField = () => {
+    if (!errorField.classList.contains('removed'))
+        errorField.className = 'removed'
+    errorField.innerHTML = ''
+}
+
+
+const writeToErrorField = (...lines) => {
+    if (lines.length !== 0) {
+        errorField.innerHTML = ''
+        lines.forEach(line => {
+            const par = document.createElement('p')
+            par.appendChild(document.createTextNode(line))
+            errorField.appendChild(par)
+        })
+        errorField.removeAttribute('class')
+    }
+}
+
+
 const toggleMoveListViewAndInputVisibility = () => {
     if (moveListView.classList.contains('removed')) {
         moveListView.removeAttribute('class')
@@ -552,6 +573,7 @@ const toggleMoveListViewAndInputVisibility = () => {
     else {
         moveListView.className = 'removed'
         moveListInputPanel.removeAttribute('class')
+        clearErrorField()
     }
 }
 
@@ -676,6 +698,8 @@ const showTurnsButtonOnClick = () => {
     let turns = []
     let errorLine = null
 
+    arrangementButtonOnClick(startArrangement)
+
     for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
         const line = lines[lineIndex].trim()
 
@@ -684,7 +708,7 @@ const showTurnsButtonOnClick = () => {
 
         const splitLine = line.split(/\s+/)
 
-        if (splitLine.length !== 3 && (splitLine !== 2 || lineIndex !== lines.length - 1)) {
+        if (splitLine.length !== 3 && (splitLine.length !== 2 || lineIndex !== lines.length - 1)) {
             errorLine = line
             break
         }
@@ -701,16 +725,13 @@ const showTurnsButtonOnClick = () => {
         }
     }
 
-    if (errorLine == null) {
-        arrangementButtonOnClick(startArrangement)
-
-        errorLine = lines[performTurns(turns)]
-    }
+    const earlierErrorLine = lines[performTurns(turns)]
+    errorLine = earlierErrorLine || errorLine
 
     renderEverything()
 
     if (errorLine != null) {
-        alert(`line «${errorLine}» is absolutely terrible`)
+        writeToErrorField('Не\xa0удалось прочитать партию. Строка с\xa0ошибкой:', errorLine)
         return
     }
 
