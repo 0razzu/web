@@ -538,7 +538,7 @@ const arrangementButtonOnClick = arrangement => {
 
 
 const toggleInputTurnsButtonCaption = () => {
-    inputTurnsButton.innerText = inputTurnsButton.innerText === 'Ввести ходы'? 'Отмена' : 'Ввести ходы'
+    inputTurnsButton.innerText = inputTurnsButton.innerText === 'Ввести ходы'? 'Закрыть' : 'Ввести ходы'
 }
 
 
@@ -546,6 +546,7 @@ const toggleMoveListViewAndInputVisibility = () => {
     if (moveListView.classList.contains('removed')) {
         moveListView.removeAttribute('class')
         moveListInputPanel.className = 'removed'
+        moveListInput.value = ''
     }
 
     else {
@@ -672,13 +673,16 @@ const moveListViewOnCopy = event => {
 
 const showTurnsButtonOnClick = () => {
     const lines = moveListInput.value.split('\n').filter(line => line !== '')
-    moveListInput.value = lines.join('\n')
     let turns = []
     let errorLine = null
 
     for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
-        const line = lines[lineIndex]
-        const splitLine = line.trim().split(/\s+/)
+        const line = lines[lineIndex].trim()
+
+        if (line.length === 0)
+            continue
+
+        const splitLine = line.split(/\s+/)
 
         if (splitLine.length !== 3 && (splitLine !== 2 || lineIndex !== lines.length - 1)) {
             errorLine = line
