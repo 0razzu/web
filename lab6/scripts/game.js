@@ -152,7 +152,7 @@ const stringToCell = string => {
     const row = Number(string[1]) - 1
     const col = letters.indexOf(string[0])
 
-    if (!isPlayCell(row, col))
+    if (!isPlayCell(row, col) || string.length != 2)
         return null
 
     return BOARD[row][col]
@@ -440,10 +440,14 @@ const performTurns = turns => {
         const turn = turns[lineIndex]
 
         try {
-            performHalfTurn(turn.white)
+            if (turn.white !== undefined)
+                performHalfTurn(turn.white)
 
             if (turn.black !== undefined)
                 performHalfTurn(turn.black)
+
+            if (turn.white === undefined || (turn.black === undefined && lineIndex !== turns.length - 1))
+                return lineIndex
         } catch (e) {
             return lineIndex
         }
@@ -707,11 +711,6 @@ const showTurnsButtonOnClick = () => {
             continue
 
         const splitLine = line.split(/\s+/)
-
-        if (splitLine.length !== 3 && (splitLine.length !== 2 || lineIndex !== lines.length - 1)) {
-            errorLine = line
-            break
-        }
 
         try {
             turns.push({
