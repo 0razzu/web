@@ -229,7 +229,6 @@ td {
 
 .game-page-content {
     display: flex;
-    justify-content: stretch;
     flex-wrap: wrap;
     margin-left: -5rem;
 }
@@ -267,6 +266,7 @@ textarea {
 .game-history {
     height: 70vh;
     flex-grow: 1;
+    flex-basis: 0;
     margin-left: 6rem;
 }
 
