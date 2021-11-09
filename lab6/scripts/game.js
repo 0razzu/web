@@ -697,39 +697,37 @@ const moveListViewOnCopy = event => {
 }
 
 
-const showTurnsButtonOnClick = () => {
-    const lines = moveListInput.value.split('\n').filter(line => line !== '')
-    let turns = []
-    let errorLine = null
+const parseTurns = lines => {
+    let result = {turns: []}
 
-    arrangementButtonOnClick(startArrangement)
-
-    for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
-        const line = lines[lineIndex].trim()
-
-        if (line.length === 0)
-            continue
-
+    for (let line of lines) {
         const splitLine = line.split(/\s+/)
 
         try {
-            turns.push({
-                line: splitLine[0]?.slice(0, -1),
+            result.turns.push({
                 white: splitLine[1]?.split(/-|:/).map(cellStr => stringToCell(cellStr)),
                 black: splitLine[2]?.split(/-|:/).map(cellStr => stringToCell(cellStr))
             })
         } catch (e) {
-            errorLine = line
+            result.errorLine = line
             break
         }
     }
 
-    const earlierErrorLine = lines[performTurns(turns)]
-    errorLine = earlierErrorLine || errorLine
+    return result
+}
+
+
+const showTurnsButtonOnClick = () => {
+    arrangementButtonOnClick(startArrangement)
+
+    const lines = moveListInput.value.split('\n').map(line => line.trim()).filter(line => line !== '')
+    let {turns, errorLine} = parseTurns(lines)
+    errorLine = lines[performTurns(turns)] || errorLine
 
     renderEverything()
 
-    if (errorLine != null) {
+    if (errorLine !== undefined) {
         writeToErrorField('Не\xa0удалось прочитать партию. Строка с\xa0ошибкой:', errorLine)
         return
     }
