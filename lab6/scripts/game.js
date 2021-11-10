@@ -3,6 +3,7 @@ const BOARD = Array.from(Array(BOARD_SIZE), () => Array(BOARD_SIZE))
 let BOARD_VIEW
 let SITUATION = new Map()
 let inPromptMode = null
+let curMoves = []
 let moveList = []
 let becomeKing = false
 let killed = []
@@ -159,22 +160,42 @@ const stringToCell = string => {
 }
 
 
-const renderMoveList = () => {
-    const delimiter = killed.length === 0? '-' : ':'
+const pushCurMovesToMoveList = () => {
+    moveList.push({
+        moves: [...curMoves],
+        haveKilled: killed.length !== 0,
+        whoseTurn: whoseTurn
+    })
+}
 
-    if (whoseTurn === 'w') {
+
+const renderMoveListEntry = entry => {
+    const delimiter = entry.haveKilled? ':' : '-'
+
+    if (entry.whoseTurn === 'w') {
         const turnView = document.createElement('li')
-        turnView.appendChild(document.createTextNode(moveList.map(cell => cellToString(cell)).join(delimiter)))
+        turnView.appendChild(document.createTextNode(entry.moves.map(cell => cellToString(cell)).join(delimiter)))
         moveListView.appendChild(turnView)
     }
 
     else {
         const moveViews = moveListView.getElementsByTagName('li')
         const turnView = moveViews[moveViews.length - 1]
-        turnView.textContent += ' ' + moveList.map(cell => cellToString(cell)).join(delimiter)
+        turnView.textContent += ' ' + entry.moves.map(cell => cellToString(cell)).join(delimiter)
     }
 
     moveListView.scrollTop = moveListView.scrollHeight
+}
+
+
+const renderLastMoveListEntry = () => renderMoveListEntry(moveList[moveList.length - 1])
+
+
+const renderMoveList = () => {
+    moveListView.innerHTML = ''
+
+    if (moveList.length !== 0)
+        moveList.forEach(entry => renderMoveListEntry(entry))
 }
 
 
@@ -349,7 +370,7 @@ const togglePromptMode = cell => {
             dest.dest.state = CELL_STATE.DEFAULT
     }
 
-    else if (inPromptMode === null && (moveList.length === 0 || (killed.length !== 0 && dests.length !== 0))) {
+    else if (inPromptMode === null && (curMoves.length === 0 || (killed.length !== 0 && dests.length !== 0))) {
         inPromptMode = cell
         cell.state = CELL_STATE.PROMPT
 
@@ -381,14 +402,14 @@ const hintOrMove = (row, col) => {
     let changedCells = []
     let targetCell = BOARD[row][col]
 
-    if (inPromptMode === null || (moveList.length === 0 && inPromptMode === targetCell))
+    if (inPromptMode === null || (curMoves.length === 0 && inPromptMode === targetCell))
         changedCells = togglePromptMode(targetCell)
 
     else if (targetCell.state === CELL_STATE.CAN_BE_FILLED) {
-        moveList = [inPromptMode]
+        curMoves = [inPromptMode]
         changedCells = togglePromptMode(inPromptMode)
-        move(moveList[0].row, moveList[0].col, row, col)
-        moveList[1] = targetCell
+        move(curMoves[0].row, curMoves[0].col, row, col)
+        curMoves[1] = targetCell
 
         makeKingIfNeeded(targetCell)
     }
@@ -398,9 +419,9 @@ const hintOrMove = (row, col) => {
         changedCells = togglePromptMode(inPromptMode)
         move(wasInPromptMode.row, wasInPromptMode.col, row, col)
 
-        if (moveList.length === 0)
-            moveList = [wasInPromptMode]
-        moveList.push(BOARD[row][col])
+        if (curMoves.length === 0)
+            curMoves = [wasInPromptMode]
+        curMoves.push(BOARD[row][col])
 
         makeKingIfNeeded(targetCell)
 
@@ -413,7 +434,7 @@ const hintOrMove = (row, col) => {
         changedCells = changedCells.concat(togglePromptMode(targetCell))
     }
 
-    buttonsVisible = (moveList.length !== 0)
+    buttonsVisible = (curMoves.length !== 0)
 
     return changedCells
 }
@@ -433,7 +454,6 @@ const performHalfTurn = (halfTurn, haveKilled) => {
     else if ((killed.length === 0 && haveKilled) || (killed.length !== 0 && !haveKilled))
         throw new Error('Factual killed do not correspond stated ones')
 
-    renderMoveList()
     finishTurn()
     clearAfterTurnFinish()
 }
@@ -521,6 +541,7 @@ const resetEverything = () => {
 
     SITUATION.clear()
     inPromptMode = null
+    curMoves = []
     moveList = []
     becomeKing = false
     killed = []
@@ -533,6 +554,7 @@ const renderEverything = () => {
     renderBoard()
     renderStatus()
     renderButtons()
+    renderMoveList()
 }
 
 
@@ -542,7 +564,6 @@ const arrangementButtonOnClick = arrangement => {
     countCheckers()
     calculateSituation()
     renderEverything()
-    moveListView.innerHTML = ''
 }
 
 
@@ -594,24 +615,24 @@ const inputTurnsButtonOnClick = () => {
 
 const cancelTurn = () => {
     const changedCells = []
-    const curCell = moveList.length === 0? inPromptMode : moveList[moveList.length - 1]
+    const curCell = curMoves.length === 0? inPromptMode : curMoves[curMoves.length - 1]
 
     SITUATION.get(curCell)?.forEach(dest => {
         dest.dest.state = CELL_STATE.DEFAULT
         changedCells.push(dest.dest)
     })
 
-    if (moveList.length !== 0) {
+    if (curMoves.length !== 0) {
         if (becomeKing) {
             curCell.checker.type = whoseTurn === 'w'? CHECKER_TYPE.WHITE : CHECKER_TYPE.BLACK
             becomeKing = false
         }
 
-        moveList[0].checker = curCell.checker
+        curMoves[0].checker = curCell.checker
         curCell.checker = null
         curCell.state = CELL_STATE.DEFAULT
 
-        changedCells.push(moveList[0])
+        changedCells.push(curMoves[0])
         changedCells.push(curCell)
     }
 
@@ -632,7 +653,7 @@ const cancelTurn = () => {
 
 
 const clearAfterTurnCancel = () => {
-    moveList = []
+    curMoves = []
     inPromptMode = null
     killed = []
     buttonsVisible = false
@@ -640,7 +661,7 @@ const clearAfterTurnCancel = () => {
 
 
 const cancelTurnButtonOnClick = () => {
-    if (moveList.length === 0 && inPromptMode === null)
+    if (curMoves.length === 0 && inPromptMode === null)
         return
 
     cancelTurn().forEach(cell => renderCell(cell.row, cell.col))
@@ -665,12 +686,14 @@ const finishTurn = () => {
     else
         whiteCounter -= killed.length
 
+    pushCurMovesToMoveList()
+
     toggleTurn()
 }
 
 
 const clearAfterTurnFinish = () => {
-    moveList = []
+    curMoves = []
     becomeKing = false
     killed = []
     buttonsVisible = false
@@ -678,10 +701,8 @@ const clearAfterTurnFinish = () => {
 
 
 const finishTurnButtonOnClick = () => {
-    if (moveList.length === 0 || inPromptMode !== null)
+    if (curMoves.length === 0 || inPromptMode !== null)
         return
-
-    renderMoveList()
 
     finishTurn()
     
@@ -690,6 +711,7 @@ const finishTurnButtonOnClick = () => {
 
     clearAfterTurnFinish()
 
+    renderLastMoveListEntry()
     renderStatus()
     renderButtons()
 }
