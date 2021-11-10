@@ -419,15 +419,19 @@ const hintOrMove = (row, col) => {
 }
 
 
-const performHalfTurn = halfTurn => {
+const performHalfTurn = (halfTurn, haveKilled) => {
     let changedCells = []
 
+    killed = []
     halfTurn.forEach(cell => {
         changedCells = hintOrMove(cell.row, cell.col)
     })
 
     if (changedCells.length === 0)
         throw new Error('Useless click')
+
+    else if ((killed.length === 0 && haveKilled) || (killed.length !== 0 && !haveKilled))
+        throw new Error('Factual killed do not correspond stated ones')
 
     renderMoveList()
     finishTurn()
@@ -441,10 +445,10 @@ const performTurns = turns => {
 
         try {
             if (turn.white !== undefined)
-                performHalfTurn(turn.white)
+                performHalfTurn(turn.white, turn.whiteHaveKilled)
 
             if (turn.black !== undefined)
-                performHalfTurn(turn.black)
+                performHalfTurn(turn.black, turn.blackHaveKilled)
 
             if (turn.white === undefined || (turn.black === undefined && lineIndex !== turns.length - 1))
                 return lineIndex
@@ -706,7 +710,9 @@ const parseTurns = lines => {
         try {
             result.turns.push({
                 white: splitLine[1]?.split(/-|:/).map(cellStr => stringToCell(cellStr)),
-                black: splitLine[2]?.split(/-|:/).map(cellStr => stringToCell(cellStr))
+                whiteHaveKilled: splitLine[1]?.includes(':'),
+                black: splitLine[2]?.split(/-|:/).map(cellStr => stringToCell(cellStr)),
+                blackHaveKilled: splitLine[2]?.includes(':')
             })
         } catch (e) {
             result.errorLine = line
