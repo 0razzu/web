@@ -193,9 +193,7 @@ const renderLastMoveListEntry = () => renderMoveListEntry(moveList[moveList.leng
 
 const renderMoveList = () => {
     moveListView.innerHTML = ''
-
-    if (moveList.length !== 0)
-        moveList.forEach(entry => renderMoveListEntry(entry))
+    moveList.forEach(entry => renderMoveListEntry(entry))
 }
 
 
