@@ -469,12 +469,12 @@ const performTurns = turns => {
 
             if (turn.black !== undefined)
                 performHalfTurn(turn.black, turn.blackHaveKilled)
-
-            if (turn.white === undefined || (turn.black === undefined && lineIndex !== turns.length - 1))
-                return lineIndex
         } catch (e) {
             return lineIndex
         }
+
+        if (turn.white === undefined || (turn.black === undefined && lineIndex !== turns.length - 1))
+            return lineIndex
     }
 }
 
