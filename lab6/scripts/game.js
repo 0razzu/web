@@ -269,7 +269,7 @@ const calculateSituation = () => {
             const type = BOARD[row][col].checker.type
 
             if (type === CHECKER_TYPE.WHITE_KING || type === CHECKER_TYPE.BLACK_KING)
-                for (it of [iterator(row, col, 1, -1), iterator(row, col, 1, 1), iterator(row, col, -1, 1), iterator(row, col, -1, -1)]) {
+                for (let it of [iterator(row, col, 1, -1), iterator(row, col, 1, 1), iterator(row, col, -1, 1), iterator(row, col, -1, -1)]) {
                     let res = it.next()
                     let foe = null
 
@@ -364,7 +364,7 @@ const togglePromptMode = cell => {
         inPromptMode = null
         cell.state = CELL_STATE.DEFAULT
 
-        for (dest of dests)
+        for (let dest of dests)
             dest.dest.state = CELL_STATE.DEFAULT
     }
 
@@ -372,7 +372,7 @@ const togglePromptMode = cell => {
         inPromptMode = cell
         cell.state = CELL_STATE.PROMPT
 
-        for (dest of dests)
+        for (let dest of dests)
             dest.dest.state = dest.state
     }
 
@@ -640,7 +640,7 @@ const cancelTurn = () => {
     }
 
     if (killed.length !== 0) {
-        for (cell of killed) {
+        for (let cell of killed) {
             cell.state = CELL_STATE.DEFAULT
             changedCells.push(cell)
         }
@@ -673,7 +673,7 @@ const cancelTurnButtonOnClick = () => {
 
 
 const finishTurn = () => {
-    for (cell of killed) {
+    for (let cell of killed) {
         const {row, col} = cell
         clear(row, col)
         BOARD[row][col].state = CELL_STATE.DEFAULT
@@ -704,7 +704,7 @@ const finishTurnButtonOnClick = () => {
 
     finishTurn()
     
-    for (cell of killed)
+    for (let cell of killed)
         renderCell(cell.row, cell.col)
 
     clearAfterTurnFinish()
