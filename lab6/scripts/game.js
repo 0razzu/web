@@ -120,7 +120,7 @@ const toggleTurn = () => {
 
 
 const renderStatus = () => {
-    if (whiteCounter === 0 || blackCounter === 0)
+    if (whiteCounter === 0 || blackCounter === 0 || SITUATION.size === 0)
         statusStr.innerText = 'Выиграли ' + (whoseTurn === 'w'? 'чёрные' : 'белые')
 
     else
