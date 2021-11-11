@@ -358,7 +358,7 @@ const togglePromptMode = cell => {
     if (!isTurnOf(cell.row, cell.col))
         return []
 
-    const dests = SITUATION.get(cell) || []
+    const dests = SITUATION.get(cell)?? []
 
     if (inPromptMode === cell) {
         inPromptMode = null
@@ -749,7 +749,7 @@ const showTurnsButtonOnClick = () => {
 
     const lines = moveListInput.value.split('\n').map(line => line.trim()).filter(line => line !== '')
     let {turns, errorLine} = parseTurns(lines)
-    errorLine = lines[performTurns(turns)] || errorLine
+    errorLine = lines[performTurns(turns)]?? errorLine
 
     renderEverything()
 
@@ -777,7 +777,7 @@ const init = () => {
         .reduce((arr, cell, index) => {
             const row = BOARD_SIZE - 1 - Math.floor(index / BOARD_SIZE)
 
-            arr[row] = arr[row] || []
+            arr[row] = arr[row]?? []
             arr[row].push(isPlayCell(row, col)? cell : null)
 
             col = (++col) % BOARD_SIZE
