@@ -171,8 +171,8 @@ td {
 }
 
 .board th, .board td {
-    height: calc(min(7vh, 7vw));
-    width: calc(min(7vh, 7vw));
+    height: 7vmin;
+    width: 7vmin;
     padding: 0;
     background: unset;
     text-align: center;
