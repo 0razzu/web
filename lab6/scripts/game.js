@@ -130,13 +130,13 @@ const renderStatus = () => {
 
 const renderButtons = () => {
     if (buttonsVisible) {
-        cancelTurnButton.removeAttribute('class')
-        finishTurnButton.removeAttribute('class')
+        cancelTurnButton.classList.remove('hidden')
+        finishTurnButton.classList.remove('hidden')
     }
 
     else {
-        cancelTurnButton.className = 'hidden'
-        finishTurnButton.className = 'hidden'
+        cancelTurnButton.classList.add('hidden')
+        finishTurnButton.classList.add('hidden')
     }
 }
 
@@ -572,7 +572,7 @@ const toggleInputTurnsButtonCaption = () => {
 
 const clearErrorField = () => {
     if (!errorField.classList.contains('removed'))
-        errorField.className = 'removed'
+        errorField.classList.add('removed')
     errorField.innerHTML = ''
 }
 
@@ -585,23 +585,20 @@ const writeToErrorField = (...lines) => {
             par.appendChild(document.createTextNode(line))
             errorField.appendChild(par)
         })
-        errorField.removeAttribute('class')
+        errorField.classList.remove('removed')
     }
 }
 
 
 const toggleMoveListViewAndInputVisibility = () => {
-    if (moveListView.classList.contains('removed')) {
-        moveListView.removeAttribute('class')
-        moveListInputPanel.className = 'removed'
+    if (moveListView.classList.contains('removed'))
         moveListInput.value = ''
-    }
 
-    else {
-        moveListView.className = 'removed'
-        moveListInputPanel.removeAttribute('class')
+    else
         clearErrorField()
-    }
+
+    moveListView.classList.toggle('removed')
+    moveListInputPanel.classList.toggle('removed')
 }
 
 
