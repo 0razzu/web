@@ -6,7 +6,9 @@ spring:
     resources:
       static-locations:
         - classpath:/static/
-        - classpath:/static/html/
 
 server:
+  servlet:
+    context-path: /${path}
+
   port: ${port:8080}

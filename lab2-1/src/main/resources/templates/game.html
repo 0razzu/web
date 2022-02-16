@@ -4,7 +4,7 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="rating" content="General">
-        <link rel="stylesheet" href="../styles/basic.css">
+        <link rel="stylesheet" th:href="@{/styles/basic.css}">
         <title>Шашки онлайн</title>
     </head>
 
@@ -14,9 +14,9 @@
         </header>
 
         <nav>
-            <div><a href="index.html">Главная</a></div>
-            <div><a href="rules.html">Правила</a></div>
-            <div><a href="game.html" class="current-page-link">Играть</a></div>
+            <div><a th:href="@{/index}">Главная</a></div>
+            <div><a th:href="@{/rules}">Правила</a></div>
+            <div><a th:href="@{/game}" class="current-page-link">Играть</a></div>
         </nav>
 
         <main>
@@ -179,6 +179,6 @@
             </section>
         </footer>
 
-        <script src="../scripts/game.js" defer></script>
+        <script th:src="@{/scripts/game.js}" defer></script>
     </body>
 </html>
