@@ -179,6 +179,14 @@
             </section>
         </footer>
 
+        <script th:inline="javascript">
+            const PATHS = {
+                BLACK_CHECKER_SVG: [[@{/img/black-checker.svg}]],
+                BLACK_CHECKER_KING_SVG: [[@{/img/black-checker-king.svg}]],
+                WHITE_CHECKER_SVG: [[@{/img/white-checker.svg}]],
+                WHITE_CHECKER_KING_SVG: [[@{/img/white-checker-king.svg}]]
+            }
+        </script>
         <script th:src="@{/scripts/game.js}" defer></script>
     </body>
 </html>
