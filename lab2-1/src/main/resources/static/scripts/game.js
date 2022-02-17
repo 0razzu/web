@@ -32,10 +32,10 @@ const CHECKER_TYPE = {
     WHITE_KING: 2
 }
 const CHECKER_PIC = {
-    [CHECKER_TYPE.BLACK]: PATHS.BLACK_CHECKER_SVG,
-    [CHECKER_TYPE.BLACK_KING]: PATHS.BLACK_CHECKER_KING_SVG,
-    [CHECKER_TYPE.WHITE]: PATHS.WHITE_CHECKER_SVG,
-    [CHECKER_TYPE.WHITE_KING]: PATHS.WHITE_CHECKER_KING_SVG
+    [CHECKER_TYPE.BLACK]: ROOT + '/img/black-checker.svg',
+    [CHECKER_TYPE.BLACK_KING]: ROOT + '/img/black-checker-king.svg',
+    [CHECKER_TYPE.WHITE]: ROOT + '/img/white-checker.svg',
+    [CHECKER_TYPE.WHITE_KING]: ROOT + '/img/white-checker-king.svg'
 }
 const CHECKER_COLOR = {
     [CHECKER_TYPE.BLACK]: 'b',
