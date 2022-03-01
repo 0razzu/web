@@ -1,0 +1,14 @@
+spring:
+  main:
+    banner-mode: off
+
+  web:
+    resources:
+      static-locations:
+        - classpath:/static/
+
+server:
+  servlet:
+    context-path: /${path}
+
+  port: ${port:8080}
