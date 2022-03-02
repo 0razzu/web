@@ -1,4 +1,4 @@
-package checkers.controller;
+package checkers.controller.front;
 
 
 import org.springframework.http.MediaType;
