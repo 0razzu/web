@@ -1,9 +1,14 @@
 package checkers.controller.back;
 
 
+import checkers.dto.response.ResponseCreateGameDto;
+import checkers.dto.request.RequestGameDto;
+import checkers.model.Game;
 import checkers.service.GameService;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 
 @RestController
@@ -14,5 +19,23 @@ public class GameController {
     
     public GameController(GameService gameService) {
         this.gameService = gameService;
+    }
+    
+    
+    @PostMapping(path = "/game", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseCreateGameDto saveGame(@RequestBody RequestGameDto gameDto) {
+        return gameService.saveGame(gameDto);
+    }
+    
+    
+    @GetMapping(path = "/game/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Game getGame(@PathVariable String id) {
+        return gameService.getGame(id);
+    }
+    
+    
+    @GetMapping(path = "/game", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Map<String, Game> getGames() {
+        return gameService.getGames();
     }
 }

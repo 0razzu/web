@@ -2,6 +2,7 @@ const BOARD_SIZE = 8
 const BOARD = Array.from(Array(BOARD_SIZE), () => Array(BOARD_SIZE))
 let BOARD_VIEW
 let SITUATION = new Map()
+let GAME_ID
 let inPromptMode = null
 let curMoves = []
 let moveList = []
@@ -13,35 +14,35 @@ let whiteCounter = 0
 let blackCounter = 0
 
 const CELL_STATE = {
-    DEFAULT: 0,
-    PROMPT: 1,
-    CAN_BE_FILLED: 2,
-    MUST_BE_FILLED: 3,
-    KILLED: 4
+    DEFAULT: 'DEFAULT',
+    PROMPT: 'PROMPT',
+    CAN_BE_FILLED: 'CAN_BE_FILLED',
+    MUST_BE_FILLED: 'MUST_BE_FILLED',
+    KILLED: 'KILLED',
 }
 const CELL_STATE_CLASS = {
     [CELL_STATE.PROMPT]: 'prompt',
     [CELL_STATE.CAN_BE_FILLED]: 'can-be-filled',
     [CELL_STATE.MUST_BE_FILLED]: 'must-be-filled',
-    [CELL_STATE.KILLED]: 'killed'
+    [CELL_STATE.KILLED]: 'killed',
 }
 const CHECKER_TYPE = {
-    BLACK: -1,
-    BLACK_KING: -2,
-    WHITE: 1,
-    WHITE_KING: 2
+    BLACK: 'BLACK',
+    BLACK_KING: 'BLACK_KING',
+    WHITE: 'WHITE',
+    WHITE_KING: 'WHITE_KING',
 }
 const CHECKER_PIC = {
     [CHECKER_TYPE.BLACK]: ROOT + '/img/black-checker.svg',
     [CHECKER_TYPE.BLACK_KING]: ROOT + '/img/black-checker-king.svg',
     [CHECKER_TYPE.WHITE]: ROOT + '/img/white-checker.svg',
-    [CHECKER_TYPE.WHITE_KING]: ROOT + '/img/white-checker-king.svg'
+    [CHECKER_TYPE.WHITE_KING]: ROOT + '/img/white-checker-king.svg',
 }
 const CHECKER_COLOR = {
     [CHECKER_TYPE.BLACK]: 'b',
     [CHECKER_TYPE.BLACK_KING]: 'b',
     [CHECKER_TYPE.WHITE]: 'w',
-    [CHECKER_TYPE.WHITE_KING]: 'w'
+    [CHECKER_TYPE.WHITE_KING]: 'w',
 }
 
 const statusStr = document.getElementById('status')
@@ -164,7 +165,7 @@ const pushCurMovesToMoveList = () => {
     moveList.push({
         moves: [...curMoves],
         haveKilled: killed.length !== 0,
-        whoseTurn: whoseTurn
+        whoseTurn: whoseTurn,
     })
 }
 
@@ -265,7 +266,7 @@ const calculateSituation = () => {
         for (let col = 0; col < BOARD_SIZE; col++) {
             if (!isTurnOf(row, col))
                 continue
-            
+
             const type = BOARD[row][col].checker.type
 
             if (type === CHECKER_TYPE.WHITE_KING || type === CHECKER_TYPE.BLACK_KING)
@@ -293,7 +294,7 @@ const calculateSituation = () => {
                             break
 
                         res = it.next()
-                    } 
+                    }
                 }
 
             else {
@@ -358,7 +359,7 @@ const togglePromptMode = cell => {
     if (!isTurnOf(cell.row, cell.col))
         return []
 
-    const dests = SITUATION.get(cell)?? []
+    const dests = SITUATION.get(cell) ?? []
 
     if (inPromptMode === cell) {
         inPromptMode = null
@@ -556,15 +557,6 @@ const renderEverything = () => {
 }
 
 
-const arrangementButtonOnClick = arrangement => {
-    resetEverything()
-    arrangement()
-    countCheckers()
-    calculateSituation()
-    renderEverything()
-}
-
-
 const toggleInputTurnsButtonCaption = () => {
     inputTurnsButton.innerText = inputTurnsButton.innerText === 'Ввести ходы'? 'Закрыть' : 'Ввести ходы'
 }
@@ -599,6 +591,30 @@ const toggleMoveListViewAndInputVisibility = () => {
 
     moveListView.classList.toggle('removed')
     moveListInputPanel.classList.toggle('removed')
+}
+
+
+const arrangementButtonOnClick = arrangement => {
+    resetEverything()
+    arrangement()
+    countCheckers()
+    calculateSituation()
+    renderEverything()
+}
+
+
+const startGameButtonOnClick = () => {
+    arrangementButtonOnClick(startArrangement)
+
+    fetch(ROOT + '/api/game', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({board: BOARD.map(row => row.map(cell => cell.checker?.type))}),
+    })
+        .then(response => response.json())
+        .then(dto => GAME_ID = dto.id)
 }
 
 
@@ -642,7 +658,7 @@ const cancelTurn = () => {
             changedCells.push(cell)
         }
     }
-    
+
     return changedCells
 }
 
@@ -700,7 +716,7 @@ const finishTurnButtonOnClick = () => {
         return
 
     finishTurn()
-    
+
     for (let cell of killed)
         renderCell(cell.row, cell.col)
 
@@ -729,7 +745,7 @@ const parseTurns = lines => {
                 white: splitLine[1]?.split(/-|:/).map(cellStr => stringToCell(cellStr)),
                 whiteHaveKilled: splitLine[1]?.includes(':'),
                 black: splitLine[2]?.split(/-|:/).map(cellStr => stringToCell(cellStr)),
-                blackHaveKilled: splitLine[2]?.includes(':')
+                blackHaveKilled: splitLine[2]?.includes(':'),
             })
         } catch (e) {
             result.errorLine = line
@@ -774,7 +790,7 @@ const init = () => {
         .reduce((arr, cell, index) => {
             const row = BOARD_SIZE - 1 - Math.floor(index / BOARD_SIZE)
 
-            arr[row] = arr[row]?? []
+            arr[row] = arr[row] ?? []
             arr[row].push(isPlayCell(row, col)? cell : null)
 
             col = (++col) % BOARD_SIZE
@@ -786,7 +802,7 @@ const init = () => {
         for (let col = 0; col < BOARD_SIZE; col++)
             BOARD_VIEW[row][col]?.addEventListener('click', () => cellOnClick(row, col))
 
-    startButton.addEventListener('click', () => arrangementButtonOnClick(startArrangement))
+    startButton.addEventListener('click', () => startGameButtonOnClick())
     example1button.addEventListener('click', () => arrangementButtonOnClick(example1Arrangement))
     inputTurnsButton.addEventListener('click', () => inputTurnsButtonOnClick())
     cancelTurnButton.addEventListener('click', () => cancelTurnButtonOnClick())

@@ -6,6 +6,8 @@ spring:
     resources:
       static-locations:
         - classpath:/static/
+  jackson:
+    default-property-inclusion: non_null
 
 server:
   servlet:
