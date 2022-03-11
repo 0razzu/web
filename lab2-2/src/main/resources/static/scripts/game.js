@@ -598,23 +598,7 @@ const arrangementButtonOnClick = arrangement => {
     resetEverything()
     arrangement()
     countCheckers()
-    calculateSituation()
-    renderEverything()
-}
-
-
-const startGameButtonOnClick = () => {
-    arrangementButtonOnClick(startArrangement)
-
-    fetch(ROOT + '/api/game', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({board: BOARD.map(row => row.map(cell => cell.checker?.type))}),
-    })
-        .then(response => response.json())
-        .then(dto => GAME_ID = dto.id)
+    createGame(renderEverything)
 }
 
 
@@ -802,7 +786,7 @@ const init = () => {
         for (let col = 0; col < BOARD_SIZE; col++)
             BOARD_VIEW[row][col]?.addEventListener('click', () => cellOnClick(row, col))
 
-    startButton.addEventListener('click', () => startGameButtonOnClick())
+    startButton.addEventListener('click', () => arrangementButtonOnClick(startArrangement))
     example1button.addEventListener('click', () => arrangementButtonOnClick(example1Arrangement))
     inputTurnsButton.addEventListener('click', () => inputTurnsButtonOnClick())
     cancelTurnButton.addEventListener('click', () => cancelTurnButtonOnClick())

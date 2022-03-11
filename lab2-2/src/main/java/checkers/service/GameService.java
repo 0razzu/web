@@ -145,7 +145,7 @@ public class GameService {
     }
     
     
-    public ResponseCreateGameDto saveGame(RequestGameDto gameDto) {
+    public ResponseCreateGameDto createGame(RequestGameDto gameDto) {
         Checker[][] gameDtoBoard = gameDto.getBoard();
         Cell[][] board = new Cell[BOARD_SIZE][BOARD_SIZE];
         for (int i = 0; i < BOARD_SIZE; i++)

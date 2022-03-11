@@ -23,8 +23,8 @@ public class GameController {
     
     
     @PostMapping(path = "/game", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseCreateGameDto saveGame(@RequestBody RequestGameDto gameDto) {
-        return gameService.saveGame(gameDto);
+    public ResponseCreateGameDto createGame(@RequestBody RequestGameDto gameDto) {
+        return gameService.createGame(gameDto);
     }
     
     
