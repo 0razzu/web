@@ -83,14 +83,6 @@ const clear = (row, col) => {
 }
 
 
-// const move = (rowFrom, colFrom, rowTo, colTo) => {
-//     const type = BOARD[rowFrom][colFrom].checker.type
-//
-//     clear(rowFrom, colFrom)
-//     place(type, rowTo, colTo)
-// }
-
-
 const renderCell = (row, col) => {
     if (!isPlayCell(row, col))
         return
@@ -221,138 +213,6 @@ const isTurnOf = (row, col) => {
 }
 
 
-const addToSituation = (cell, dest, state, foe) => {
-    let dests = SITUATION.get(cell)
-    const newDest = {dest: dest, state: state, foe: foe}
-
-    if (dests === undefined)
-        SITUATION.set(cell, [newDest])
-
-    else
-        dests.push(newDest)
-}
-
-
-const areFoes = (row1, col1, row2, col2) => {
-    const color1 = CHECKER_COLOR[BOARD[row1][col1]?.checker?.type]
-    const color2 = CHECKER_COLOR[BOARD[row2][col2]?.checker?.type]
-
-    return color1 != null && color2 != null && color1 !== color2
-}
-
-
-const iterator = (row, col, rowDir, colDir) => {
-    return {
-        next: () => {
-            row += rowDir
-            col += colDir
-
-            return (row > -1 && row < BOARD_SIZE && col > -1 && col < BOARD_SIZE)?
-                {value: {row: row, col: col}, done: false} :
-                {done: true}
-        }
-    }
-}
-
-
-const calculateSituation = () => {
-    SITUATION.clear()
-
-    let foundMustBeFilled = false
-
-    for (let row = 0; row < BOARD_SIZE; row++)
-        for (let col = 0; col < BOARD_SIZE; col++) {
-            if (!isTurnOf(row, col))
-                continue
-
-            const type = BOARD[row][col].checker.type
-
-            if (type === CHECKER_TYPE.WHITE_KING || type === CHECKER_TYPE.BLACK_KING)
-                for (let it of [iterator(row, col, 1, -1), iterator(row, col, 1, 1), iterator(row, col, -1, 1), iterator(row, col, -1, -1)]) {
-                    let res = it.next()
-                    let foe = null
-
-                    while (!res.done) {
-                        let {row: rowTo, col: colTo} = res.value
-
-                        if (!hasChecker(rowTo, colTo)) {
-                            if (foe !== null) {
-                                addToSituation(BOARD[row][col], BOARD[rowTo][colTo], CELL_STATE.MUST_BE_FILLED, foe)
-                                foundMustBeFilled = true
-                            }
-
-                            else if (!foundMustBeFilled)
-                                addToSituation(BOARD[row][col], BOARD[rowTo][colTo], CELL_STATE.CAN_BE_FILLED)
-                        }
-
-                        else if (foe === null && areFoes(row, col, rowTo, colTo))
-                            foe = BOARD[rowTo][colTo]
-
-                        else
-                            break
-
-                        res = it.next()
-                    }
-                }
-
-            else {
-                if (row < BOARD_SIZE - 2) {
-                    if (col > 1 && areFoes(row, col, row + 1, col - 1) && !hasChecker(row + 2, col - 2)) {
-                        addToSituation(BOARD[row][col], BOARD[row + 2][col - 2], CELL_STATE.MUST_BE_FILLED, BOARD[row + 1][col - 1])
-                        foundMustBeFilled = true
-                    }
-
-                    if (col < BOARD_SIZE - 2 && areFoes(row, col, row + 1, col + 1) && !hasChecker(row + 2, col + 2)) {
-                        addToSituation(BOARD[row][col], BOARD[row + 2][col + 2], CELL_STATE.MUST_BE_FILLED, BOARD[row + 1][col + 1])
-                        foundMustBeFilled = true
-                    }
-                }
-
-                if (row > 1) {
-                    if (col > 1 && areFoes(row, col, row - 1, col - 1) && !hasChecker(row - 2, col - 2)) {
-                        addToSituation(BOARD[row][col], BOARD[row - 2][col - 2], CELL_STATE.MUST_BE_FILLED, BOARD[row - 1][col - 1])
-                        foundMustBeFilled = true
-                    }
-
-                    if (col < BOARD_SIZE - 2 && areFoes(row, col, row - 1, col + 1) && !hasChecker(row - 2, col + 2)) {
-                        addToSituation(BOARD[row][col], BOARD[row - 2][col + 2], CELL_STATE.MUST_BE_FILLED, BOARD[row - 1][col + 1])
-                        foundMustBeFilled = true
-                    }
-                }
-
-                if (!foundMustBeFilled) {
-                    if (isWhite(row, col) && row < BOARD_SIZE - 1) {
-                        if (col > 0 && !hasChecker(row + 1, col - 1))
-                            addToSituation(BOARD[row][col], BOARD[row + 1][col - 1], CELL_STATE.CAN_BE_FILLED)
-
-                        if (col < BOARD_SIZE - 1 && !hasChecker(row + 1, col + 1))
-                            addToSituation(BOARD[row][col], BOARD[row + 1][col + 1], CELL_STATE.CAN_BE_FILLED)
-                    }
-
-                    else if (isBlack(row, col) && row > 0) {
-                        if (col > 0 && !hasChecker(row - 1, col - 1))
-                            addToSituation(BOARD[row][col], BOARD[row - 1][col - 1], CELL_STATE.CAN_BE_FILLED)
-
-                        if (col < BOARD_SIZE - 1 && !hasChecker(row - 1, col + 1))
-                            addToSituation(BOARD[row][col], BOARD[row - 1][col + 1], CELL_STATE.CAN_BE_FILLED)
-                    }
-                }
-            }
-        }
-
-    if (foundMustBeFilled)
-        for (let entry of SITUATION) {
-            const [cellFrom, cellsTo] = entry
-            const filteredCellsTo = cellsTo.filter(cellTo => cellTo.state === CELL_STATE.MUST_BE_FILLED && cellTo.foe.state !== CELL_STATE.KILLED)
-
-            if (filteredCellsTo.length === 0)
-                SITUATION.delete(cellFrom)
-            else
-                SITUATION.set(cellFrom, filteredCellsTo)
-        }
-}
-
-
 const togglePromptMode = cell => {
     if (!isTurnOf(cell.row, cell.col))
         return []
@@ -379,19 +239,6 @@ const togglePromptMode = cell => {
     changedCells.push(cell)
 
     return changedCells
-}
-
-
-const makeKingIfNeeded = cell => {
-    if (whoseTurn === 'w' && cell.row === BOARD_SIZE - 1) {
-        cell.checker.type = CHECKER_TYPE.WHITE_KING
-        becomeKing = true
-    }
-
-    else if (whoseTurn === 'b' && cell.row === 0) {
-        cell.checker.type = CHECKER_TYPE.BLACK_KING
-        becomeKing = true
-    }
 }
 
 
@@ -478,25 +325,25 @@ const example1Arrangement = () => {
             if (isPlayCell(row, col))
                 clear(row, col)
 
-    // place(CHECKER_TYPE.WHITE, 3, 5)
-    // place(CHECKER_TYPE.WHITE, 3, 7)
-    //
-    // place(CHECKER_TYPE.BLACK, 7, 1)
-    // place(CHECKER_TYPE.BLACK_KING, 0, 2)
-    // place(CHECKER_TYPE.BLACK, 4, 2)
-    // place(CHECKER_TYPE.BLACK, 6, 2)
-    // place(CHECKER_TYPE.BLACK, 6, 4)
-    // place(CHECKER_TYPE.BLACK, 5, 7)
-
-    place(CHECKER_TYPE.WHITE, 3, 1)
-    place(CHECKER_TYPE.WHITE, 3, 3)
     place(CHECKER_TYPE.WHITE, 3, 5)
     place(CHECKER_TYPE.WHITE, 3, 7)
 
-    place(CHECKER_TYPE.BLACK, 4, 0)
+    place(CHECKER_TYPE.BLACK, 7, 1)
+    place(CHECKER_TYPE.BLACK_KING, 0, 2)
     place(CHECKER_TYPE.BLACK, 4, 2)
-    place(CHECKER_TYPE.BLACK, 4, 4)
-    place(CHECKER_TYPE.BLACK, 4, 6)
+    place(CHECKER_TYPE.BLACK, 6, 2)
+    place(CHECKER_TYPE.BLACK, 6, 4)
+    place(CHECKER_TYPE.BLACK, 5, 7)
+
+    // place(CHECKER_TYPE.WHITE, 3, 1)
+    // place(CHECKER_TYPE.WHITE, 3, 3)
+    // place(CHECKER_TYPE.WHITE, 3, 5)
+    // place(CHECKER_TYPE.WHITE, 3, 7)
+    //
+    // place(CHECKER_TYPE.BLACK, 4, 0)
+    // place(CHECKER_TYPE.BLACK, 4, 2)
+    // place(CHECKER_TYPE.BLACK, 4, 4)
+    // place(CHECKER_TYPE.BLACK, 4, 6)
 }
 
 
@@ -648,7 +495,7 @@ const cancelTurnButtonOnClick = () => {
 
     clearAfterTurnCancel()
 
-    calculateSituation()
+    // calculateSituation()
 
     renderButtons()
 }
@@ -669,7 +516,7 @@ const finishTurn = () => {
     pushCurMovesToMoveList()
 
     toggleTurn()
-    calculateSituation()
+    // calculateSituation()
 }
 
 
