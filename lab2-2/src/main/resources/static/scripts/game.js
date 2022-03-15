@@ -83,12 +83,12 @@ const clear = (row, col) => {
 }
 
 
-const move = (rowFrom, colFrom, rowTo, colTo) => {
-    const type = BOARD[rowFrom][colFrom].checker.type
-
-    clear(rowFrom, colFrom)
-    place(type, rowTo, colTo)
-}
+// const move = (rowFrom, colFrom, rowTo, colTo) => {
+//     const type = BOARD[rowFrom][colFrom].checker.type
+//
+//     clear(rowFrom, colFrom)
+//     place(type, rowTo, colTo)
+// }
 
 
 const renderCell = (row, col) => {
@@ -115,8 +115,6 @@ const renderBoard = () => {
 
 const toggleTurn = () => {
     whoseTurn = whoseTurn === 'w'? 'b' : 'w'
-
-    calculateSituation()
 }
 
 
@@ -359,7 +357,7 @@ const togglePromptMode = cell => {
     if (!isTurnOf(cell.row, cell.col))
         return []
 
-    const dests = SITUATION.get(cell) ?? []
+    const dests = SITUATION.get(cell)?? []
 
     if (inPromptMode === cell) {
         inPromptMode = null
@@ -397,43 +395,17 @@ const makeKingIfNeeded = cell => {
 }
 
 
-const hintOrMove = (row, col) => {
+const hintOrMove = async (row, col) => {
     let changedCells = []
     let targetCell = BOARD[row][col]
 
     if (inPromptMode === null || (curMoves.length === 0 && inPromptMode === targetCell))
         changedCells = togglePromptMode(targetCell)
 
-    else if (targetCell.state === CELL_STATE.CAN_BE_FILLED) {
-        curMoves = [inPromptMode]
-        changedCells = togglePromptMode(inPromptMode)
-        move(curMoves[0].row, curMoves[0].col, row, col)
-        curMoves[1] = targetCell
-
-        makeKingIfNeeded(targetCell)
+    else if (targetCell.state === CELL_STATE.CAN_BE_FILLED || targetCell.state === CELL_STATE.MUST_BE_FILLED) {
+        changedCells = await makeStep({from: inPromptMode, to: targetCell})
+        buttonsVisible = true
     }
-
-    else if (targetCell.state === CELL_STATE.MUST_BE_FILLED) {
-        const wasInPromptMode = inPromptMode
-        changedCells = togglePromptMode(inPromptMode)
-        move(wasInPromptMode.row, wasInPromptMode.col, row, col)
-
-        if (curMoves.length === 0)
-            curMoves = [wasInPromptMode]
-        curMoves.push(BOARD[row][col])
-
-        makeKingIfNeeded(targetCell)
-
-        const killedCell = SITUATION.get(BOARD[wasInPromptMode.row][wasInPromptMode.col]).filter(dest => dest.dest.row === row && dest.dest.col === col)[0].foe
-        killedCell.state = CELL_STATE.KILLED
-        changedCells.push(killedCell)
-        killed.push(killedCell)
-
-        calculateSituation()
-        changedCells = changedCells.concat(togglePromptMode(targetCell))
-    }
-
-    buttonsVisible = (curMoves.length !== 0)
 
     return changedCells
 }
@@ -479,8 +451,11 @@ const performTurns = turns => {
 
 
 const cellOnClick = (row, col) => {
-    hintOrMove(row, col).forEach(cell => renderCell(cell.row, cell.col))
-    renderButtons()
+    hintOrMove(row, col)
+        .then(changedCells => {
+            changedCells.forEach(cell => renderCell(cell.row, cell.col))
+            renderButtons()
+        })
 }
 
 
@@ -503,15 +478,25 @@ const example1Arrangement = () => {
             if (isPlayCell(row, col))
                 clear(row, col)
 
+    // place(CHECKER_TYPE.WHITE, 3, 5)
+    // place(CHECKER_TYPE.WHITE, 3, 7)
+    //
+    // place(CHECKER_TYPE.BLACK, 7, 1)
+    // place(CHECKER_TYPE.BLACK_KING, 0, 2)
+    // place(CHECKER_TYPE.BLACK, 4, 2)
+    // place(CHECKER_TYPE.BLACK, 6, 2)
+    // place(CHECKER_TYPE.BLACK, 6, 4)
+    // place(CHECKER_TYPE.BLACK, 5, 7)
+
+    place(CHECKER_TYPE.WHITE, 3, 1)
+    place(CHECKER_TYPE.WHITE, 3, 3)
     place(CHECKER_TYPE.WHITE, 3, 5)
     place(CHECKER_TYPE.WHITE, 3, 7)
 
-    place(CHECKER_TYPE.BLACK, 7, 1)
-    place(CHECKER_TYPE.BLACK_KING, 0, 2)
+    place(CHECKER_TYPE.BLACK, 4, 0)
     place(CHECKER_TYPE.BLACK, 4, 2)
-    place(CHECKER_TYPE.BLACK, 6, 2)
-    place(CHECKER_TYPE.BLACK, 6, 4)
-    place(CHECKER_TYPE.BLACK, 5, 7)
+    place(CHECKER_TYPE.BLACK, 4, 4)
+    place(CHECKER_TYPE.BLACK, 4, 6)
 }
 
 
@@ -598,7 +583,7 @@ const arrangementButtonOnClick = arrangement => {
     resetEverything()
     arrangement()
     countCheckers()
-    createGame(renderEverything)
+    createGame().then(() => renderEverything())
 }
 
 
@@ -684,6 +669,7 @@ const finishTurn = () => {
     pushCurMovesToMoveList()
 
     toggleTurn()
+    calculateSituation()
 }
 
 

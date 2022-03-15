@@ -11,7 +11,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ResponseCreateGameDto {
+public class CreateGameResponse {
     private String id;
     private List<SituationEntryDto> situation;
 }

@@ -1,8 +1,8 @@
-package checkers.dto.response;
+package checkers.dto.versatile;
 
 
-import checkers.dto.versatile.CellDto;
 import checkers.model.CellState;
+import checkers.model.Checker;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -11,8 +11,9 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class PossibleMoveDto {
-    private CellDto to;
-    private CellDto foe;
+public class FullCellDto {
+    private int row;
+    private int col;
     private CellState state;
+    private Checker checker;
 }

@@ -1,7 +1,7 @@
 package checkers.dto.response;
 
 
-import checkers.dto.versatile.CellDto;
+import checkers.dto.versatile.FullCellDto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -12,7 +12,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class SituationEntryDto {
-    private CellDto from;
-    private List<PossibleMoveDto> moves;
+public class MakeStepResponse {
+    private List<FullCellDto> changedCells;
+    private List<SituationEntryDto> situation;
 }

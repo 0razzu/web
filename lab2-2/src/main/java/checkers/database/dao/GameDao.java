@@ -8,6 +8,7 @@ import java.util.Map;
 
 public interface GameDao {
     String put(Game game);
-    Game get(String gameId);
+    void update(String id, Game game);
+    Game get(String id);
     Map<String, Game> getAll();
 }

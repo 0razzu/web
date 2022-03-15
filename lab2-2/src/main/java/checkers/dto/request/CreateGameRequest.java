@@ -1,6 +1,7 @@
-package checkers.dto.response;
+package checkers.dto.request;
 
 
+import checkers.model.Checker;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -9,7 +10,6 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ResponseCellDto {
-    private int row;
-    private int col;
+public class CreateGameRequest {
+    private Checker[][] board;
 }

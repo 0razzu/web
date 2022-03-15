@@ -1,9 +1,11 @@
 package checkers.controller.back;
 
 
-import checkers.dto.response.ResponseCreateGameDto;
-import checkers.dto.request.RequestGameDto;
-import checkers.model.Game;
+import checkers.dto.request.CreateGameRequest;
+import checkers.dto.response.CreateGameResponse;
+import checkers.dto.response.GetGameResponse;
+import checkers.dto.response.MakeStepResponse;
+import checkers.dto.versatile.StepDto;
 import checkers.service.GameService;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -12,7 +14,7 @@ import java.util.Map;
 
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/games")
 public class GameController {
     private final GameService gameService;
     
@@ -22,20 +24,27 @@ public class GameController {
     }
     
     
-    @PostMapping(path = "/game", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseCreateGameDto createGame(@RequestBody RequestGameDto gameDto) {
-        return gameService.createGame(gameDto);
+    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public CreateGameResponse createGame(@RequestBody CreateGameRequest request) {
+        return gameService.createGame(request);
     }
     
     
-    @GetMapping(path = "/game/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Game getGame(@PathVariable String id) {
+    @PostMapping(path = "/{id}/currentMove/steps",
+            consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public MakeStepResponse makeStep(@PathVariable("id") String gameId, @RequestBody StepDto request) {
+        return gameService.makeStep(gameId, request);
+    }
+    
+    
+    @GetMapping(path = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public GetGameResponse getGame(@PathVariable String id) {
         return gameService.getGame(id);
     }
     
     
-    @GetMapping(path = "/game", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Map<String, Game> getGames() {
+    @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+    public Map<String, GetGameResponse> getGames() {
         return gameService.getGames();
     }
 }

@@ -35,11 +35,20 @@ public class ExodusGameDao implements GameDao {
     
     
     @Override
-    public Game get(String gameId) {
+    public void update(String id, Game game) {
+        STORE.executeInTransaction(txn -> {
+            Entity gameEntity = txn.getEntity(txn.toEntityId(id));
+            ExodusGameMapper.toEntity(gameEntity, game);
+        });
+    }
+    
+    
+    @Override
+    public Game get(String id) {
         AtomicReference<Game> gameRef = new AtomicReference<>();
         
         STORE.executeInReadonlyTransaction(txn -> {
-            Entity gameEntity = txn.getEntity(txn.toEntityId(gameId));
+            Entity gameEntity = txn.getEntity(txn.toEntityId(id));
             gameRef.set(ExodusGameMapper.fromEntity(gameEntity));
         });
         
@@ -54,7 +63,9 @@ public class ExodusGameDao implements GameDao {
         STORE.executeInReadonlyTransaction(txn -> {
             EntityIterable gameEntities = txn.getAll("Game");
             Map<String, Game> games = new HashMap<>();
-            gameEntities.forEach(gameEntity -> games.put(gameEntity.toIdString(), ExodusGameMapper.fromEntity(gameEntity)));
+            gameEntities.forEach(gameEntity ->
+                    games.put(gameEntity.toIdString(), ExodusGameMapper.fromEntity(gameEntity)));
+            
             gamesRef.set(games);
         });
         
