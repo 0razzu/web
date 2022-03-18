@@ -4,7 +4,7 @@ let BOARD_VIEW
 let SITUATION = new Map()
 let GAME_ID
 let inPromptMode = null
-let curMoves = []
+let inMove = false
 let moveList = []
 let becomeKing = false
 let killed = []
@@ -227,7 +227,7 @@ const togglePromptMode = cell => {
             dest.dest.state = CELL_STATE.DEFAULT
     }
 
-    else if (inPromptMode === null && (curMoves.length === 0 || (killed.length !== 0 && dests.length !== 0))) {
+    else if (inPromptMode === null && (!inMove || (killed.length !== 0 && dests.length !== 0))) {
         inPromptMode = cell
         cell.state = CELL_STATE.PROMPT
 
@@ -246,11 +246,12 @@ const hintOrMove = async (row, col) => {
     let changedCells = []
     let targetCell = BOARD[row][col]
 
-    if (inPromptMode === null || (curMoves.length === 0 && inPromptMode === targetCell))
+    if (inPromptMode === null || (!inMove && inPromptMode === targetCell))
         changedCells = togglePromptMode(targetCell)
 
     else if (targetCell.state === CELL_STATE.CAN_BE_FILLED || targetCell.state === CELL_STATE.MUST_BE_FILLED) {
         changedCells = await makeStep({from: inPromptMode, to: targetCell})
+        inMove = true
         buttonsVisible = true
     }
 
@@ -335,15 +336,15 @@ const example1Arrangement = () => {
     place(CHECKER_TYPE.BLACK, 6, 4)
     place(CHECKER_TYPE.BLACK, 5, 7)
 
-    // place(CHECKER_TYPE.WHITE, 3, 1)
-    // place(CHECKER_TYPE.WHITE, 3, 3)
-    // place(CHECKER_TYPE.WHITE, 3, 5)
-    // place(CHECKER_TYPE.WHITE, 3, 7)
+    // place(CHECKER_TYPE.WHITE, 5, 1)
+    // place(CHECKER_TYPE.WHITE, 5, 3)
+    // place(CHECKER_TYPE.WHITE, 5, 5)
+    // place(CHECKER_TYPE.WHITE, 5, 7)
     //
-    // place(CHECKER_TYPE.BLACK, 4, 0)
-    // place(CHECKER_TYPE.BLACK, 4, 2)
-    // place(CHECKER_TYPE.BLACK, 4, 4)
-    // place(CHECKER_TYPE.BLACK, 4, 6)
+    // place(CHECKER_TYPE.BLACK, 6, 0)
+    // place(CHECKER_TYPE.BLACK, 6, 2)
+    // place(CHECKER_TYPE.BLACK, 6, 4)
+    // place(CHECKER_TYPE.BLACK, 6, 6)
 }
 
 
@@ -372,7 +373,7 @@ const resetEverything = () => {
 
     SITUATION.clear()
     inPromptMode = null
-    curMoves = []
+    inMove = false
     moveList = []
     becomeKing = false
     killed = []
@@ -440,64 +441,18 @@ const inputTurnsButtonOnClick = () => {
 }
 
 
-const cancelTurn = () => {
-    const changedCells = []
-    const curCell = curMoves.length === 0? inPromptMode : curMoves[curMoves.length - 1]
-
-    SITUATION.get(curCell)?.forEach(dest => {
-        dest.dest.state = CELL_STATE.DEFAULT
-        changedCells.push(dest.dest)
-    })
-
-    if (curMoves.length !== 0) {
-        if (becomeKing) {
-            curCell.checker.type = whoseTurn === 'w'? CHECKER_TYPE.WHITE : CHECKER_TYPE.BLACK
-            becomeKing = false
-        }
-
-        curMoves[0].checker = curCell.checker
-        curCell.checker = null
-        curCell.state = CELL_STATE.DEFAULT
-
-        changedCells.push(curMoves[0])
-        changedCells.push(curCell)
-    }
-
-    else {
-        inPromptMode.state = CELL_STATE.DEFAULT
-        changedCells.push(inPromptMode)
-    }
-
-    if (killed.length !== 0) {
-        for (let cell of killed) {
-            cell.state = CELL_STATE.DEFAULT
-            changedCells.push(cell)
-        }
-    }
-
-    return changedCells
-}
-
-
-const clearAfterTurnCancel = () => {
-    curMoves = []
-    inPromptMode = null
-    killed = []
-    buttonsVisible = false
-}
-
-
 const cancelTurnButtonOnClick = () => {
-    if (curMoves.length === 0 && inPromptMode === null)
+    if (!inMove && inPromptMode === null)
         return
 
-    cancelTurn().forEach(cell => renderCell(cell.row, cell.col))
-
-    clearAfterTurnCancel()
-
-    // calculateSituation()
-
-    renderButtons()
+    cancelTurn()
+        .then(changedCells => {
+            changedCells.forEach(cell => renderCell(cell.row, cell.col))
+            buttonsVisible = false
+            inPromptMode = null
+            inMove = false
+            renderButtons()
+        })
 }
 
 
@@ -521,7 +476,7 @@ const finishTurn = () => {
 
 
 const clearAfterTurnFinish = () => {
-    curMoves = []
+    inMove = false
     becomeKing = false
     killed = []
     buttonsVisible = false
@@ -529,7 +484,7 @@ const clearAfterTurnFinish = () => {
 
 
 const finishTurnButtonOnClick = () => {
-    if (curMoves.length === 0 || inPromptMode !== null)
+    if (!inMove || inPromptMode !== null)
         return
 
     finishTurn()
@@ -547,7 +502,8 @@ const finishTurnButtonOnClick = () => {
 
 const moveListViewOnCopy = event => {
     event.preventDefault()
-    event.clipboardData.setData('text', document.getSelection().toString().split('\n').map((line, index) => (index + 1) + '. ' + line).join('\n'))
+    event.clipboardData.setData('text', document.getSelection().toString().split('\n')
+        .map((line, index) => (index + 1) + '. ' + line).join('\n'))
 }
 
 
@@ -559,9 +515,9 @@ const parseTurns = lines => {
 
         try {
             result.turns.push({
-                white: splitLine[1]?.split(/-|:/).map(cellStr => stringToCell(cellStr)),
+                white: splitLine[1]?.split(/[-:]/).map(cellStr => stringToCell(cellStr)),
                 whiteHaveKilled: splitLine[1]?.includes(':'),
-                black: splitLine[2]?.split(/-|:/).map(cellStr => stringToCell(cellStr)),
+                black: splitLine[2]?.split(/[-:]/).map(cellStr => stringToCell(cellStr)),
                 blackHaveKilled: splitLine[2]?.includes(':'),
             })
         } catch (e) {

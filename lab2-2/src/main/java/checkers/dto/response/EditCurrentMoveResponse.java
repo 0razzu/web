@@ -12,7 +12,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class MakeStepResponse {
+public class EditCurrentMoveResponse {
     private List<FullCellDto> changedCells;
     private List<SituationEntryDto> situation;
 }

@@ -1,6 +1,7 @@
 package checkers.dto.response;
 
 
+import checkers.dto.versatile.CellDto;
 import checkers.dto.versatile.FullCellDto;
 import checkers.dto.versatile.MoveDto;
 import checkers.model.Status;
@@ -22,5 +23,6 @@ public class GetGameResponse {
     private List<SituationEntryDto> situation;
     private List<MoveDto> moveList;
     private MoveDto currentMove;
+    private List<CellDto> killed;
     private boolean becomeKing;
 }

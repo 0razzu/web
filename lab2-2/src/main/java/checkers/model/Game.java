@@ -20,6 +20,7 @@ public class Game {
     private Multimap<Cell, PossibleMove> situation;
     private List<Move> moveList;
     private Move currentMove;
+    private List<Cell> killed;
     private boolean becomeKing;
     
     
@@ -28,5 +29,6 @@ public class Game {
         this.whoseTurn = whoseTurn;
         status = Status.RUNNING;
         moveList = new ArrayList<>();
+        killed = new ArrayList<>();
     }
 }

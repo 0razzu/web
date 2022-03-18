@@ -10,6 +10,14 @@ const post = (path, body) => {
 }
 
 
+const del = path => {
+    return fetch(ROOT + '/api/games' + path, {
+        method: 'DELETE',
+    })
+        .then(response => response.json())
+}
+
+
 const mapToSituation = situationDto => {
     SITUATION.clear()
 
@@ -62,6 +70,15 @@ const makeStep = async ({from, to}) => {
             to: {row: to.row, col: to.col},
         })
     )
+        .then(({changedCells, situation}) => {
+            mapToSituation(situation)
+
+            return mapToCellList(changedCells)
+        })
+}
+
+const cancelTurn = async () => {
+    return del(`/${GAME_ID}/currentMove`)
         .then(({changedCells, situation}) => {
             mapToSituation(situation)
 

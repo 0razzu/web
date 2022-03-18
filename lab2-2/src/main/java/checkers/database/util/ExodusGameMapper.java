@@ -10,6 +10,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import jetbrains.exodus.entitystore.Entity;
 
+import java.lang.reflect.Type;
 import java.util.AbstractMap;
 import java.util.HashMap;
 import java.util.List;
@@ -19,6 +20,7 @@ import java.util.stream.Collectors;
 
 public class ExodusGameMapper {
     private static final Gson GSON = new Gson();
+    private static final Type strList = new TypeToken<List<String>>(){}.getType();
     
     
     private static class Delimiters {
@@ -124,8 +126,8 @@ public class ExodusGameMapper {
         String[] fields = str.split(Delimiters.MOVE);
         
         return new Move(
-                ((List<String>) GSON.fromJson(fields[0], new TypeToken<List<String>>(){}.getType())).stream()
-                        .map(stepStr -> toStep(str, board)).collect(Collectors.toList()),
+                ((List<String>) GSON.fromJson(fields[0], strList)).stream()
+                        .map(stepStr -> toStep(stepStr, board)).collect(Collectors.toList()),
                 Boolean.getBoolean(fields[1]),
                 Team.valueOf(fields[2])
         );
@@ -140,6 +142,8 @@ public class ExodusGameMapper {
         entity.setProperty("moveList", GSON.toJson(game.getMoveList().stream()
                 .map(ExodusGameMapper::toString).collect(Collectors.toList())));
         entity.setProperty("currentMove", toString(game.getCurrentMove()));
+        entity.setProperty("killed", GSON.toJson(game.getKilled().stream()
+                        .map(ExodusGameMapper::toString).collect(Collectors.toList())));
         entity.setProperty("becomeKing", game.isBecomeKing());
     }
     
@@ -152,11 +156,11 @@ public class ExodusGameMapper {
                 Team.valueOf((String) entity.getProperty("whoseTurn")),
                 Status.valueOf((String) entity.getProperty("status")),
                 toSituation((String) entity.getProperty("situation"), board),
-                ((List<String>) GSON.fromJson((String) entity.getProperty("moveList"),
-                        new TypeToken<List<String>>() {
-                        }.getType())).stream()
+                ((List<String>) GSON.fromJson((String) entity.getProperty("moveList"), strList)).stream()
                         .map(moveStr -> toMove(moveStr, board)).collect(Collectors.toList()),
                 toMove((String) entity.getProperty("currentMove"), board),
+                ((List<String>) GSON.fromJson((String) entity.getProperty("killed"), strList)).stream()
+                        .map(cellStr -> toCell(cellStr, board)).collect(Collectors.toList()),
                 (boolean) entity.getProperty("becomeKing")
         );
     }

@@ -66,8 +66,8 @@ public class ToDtoMapper {
     }
     
     
-    public static MakeStepResponse map(List<Cell> changedCells, Multimap<Cell, PossibleMove> situation) {
-        return new MakeStepResponse(
+    public static EditCurrentMoveResponse map(List<Cell> changedCells, Multimap<Cell, PossibleMove> situation) {
+        return new EditCurrentMoveResponse(
                 map(changedCells),
                 map(situation)
         );
@@ -111,6 +111,7 @@ public class ToDtoMapper {
                 map(game.getSituation()),
                 game.getMoveList().stream().map(ToDtoMapper::map).collect(Collectors.toList()),
                 map(game.getCurrentMove()),
+                game.getKilled().stream().map(ToDtoMapper::map).collect(Collectors.toList()),
                 game.isBecomeKing()
         );
     }

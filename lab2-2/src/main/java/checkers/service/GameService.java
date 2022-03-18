@@ -5,9 +5,7 @@ import checkers.controller.util.FromDtoMapper;
 import checkers.controller.util.ToDtoMapper;
 import checkers.database.dao.GameDao;
 import checkers.dto.request.CreateGameRequest;
-import checkers.dto.response.CreateGameResponse;
-import checkers.dto.response.GetGameResponse;
-import checkers.dto.response.MakeStepResponse;
+import checkers.dto.response.*;
 import checkers.dto.versatile.StepDto;
 import checkers.model.*;
 import checkers.service.util.BoardIterator;
@@ -234,9 +232,10 @@ public class GameService {
     }
     
     
-    public MakeStepResponse makeStep(String gameId, StepDto request) {
+    public EditCurrentMoveResponse makeStep(String gameId, StepDto request) {
         Game game = gameDao.get(gameId);
         Cell[][] board = game.getBoard();
+        List<Cell> killed = game.getKilled();
         List<Cell> changedCells = null;
         Step step = FromDtoMapper.map(request, board);
         Cell from = step.getFrom();
@@ -259,14 +258,45 @@ public class GameService {
             Cell killedCell = game.getSituation().get(from).stream()
                     .filter(possibleMove -> possibleMove.getDest().equals(to)).findAny().orElseThrow().getFoe();
             killedCell.setState(CellState.KILLED);
-            changedCells.add(killedCell);
+            killed.add(killedCell);
             game.getCurrentMove().setHaveKilled(true);
 
             calculateSituation(to, game);
             changedCells.addAll(togglePromptMode(to, game));
+            changedCells.add(killedCell);
     
             gameDao.update(gameId, game);
         }
+        
+        return ToDtoMapper.map(
+                changedCells,
+                game.getSituation()
+        );
+    }
+    
+    
+    public EditCurrentMoveResponse cancelCurrentMove(String gameId) {
+        Game game = gameDao.get(gameId);
+        List<Cell> killed = game.getKilled();
+        List<Step> currentMoveSteps = game.getCurrentMove().getSteps();
+        Cell startCell = currentMoveSteps.get(0).getFrom();
+        Cell currentCell = currentMoveSteps.get(currentMoveSteps.size() - 1).getTo();
+    
+        List<Cell> changedCells = new ArrayList<>(killed);
+        changedCells.add(startCell);
+        changedCells.add(currentCell);
+        
+        startCell.setChecker(game.isBecomeKing()?
+                (game.getWhoseTurn() == Team.BLACK? Checker.BLACK : Checker.WHITE) :
+                currentCell.getChecker());
+        currentCell.setChecker(null);
+        game.setCurrentMove(null);
+        killed.forEach(cell -> cell.setState(CellState.DEFAULT));
+        killed.clear();
+        game.setBecomeKing(false);
+        calculateSituation(game);
+        
+        gameDao.update(gameId, game);
         
         return ToDtoMapper.map(
                 changedCells,
