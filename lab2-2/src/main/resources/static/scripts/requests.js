@@ -1,11 +1,16 @@
 const post = (path, body) => {
-    return fetch(ROOT + '/api/games' + path, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: body,
-    })
+    let params = {method: 'POST'}
+
+    if (body)
+        params = {
+            ...params,
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: body,
+        }
+
+    return fetch(ROOT + '/api/games' + path, params)
         .then(response => response.json())
 }
 
@@ -55,9 +60,11 @@ const createGame = async () => {
         '',
         JSON.stringify({board: BOARD.map(row => row.map(cell => cell.checker?.type))})
     )
-        .then(({id, situation}) => {
+        .then(({id, situation, status, whoseTurn: turn}) => {
             GAME_ID = id
             mapToSituation(situation)
+            currentStatus = status
+            whoseTurn = turn
         })
 }
 
@@ -83,5 +90,19 @@ const cancelTurn = async () => {
             mapToSituation(situation)
 
             return mapToCellList(changedCells)
+        })
+}
+
+const applyTurn = async () => {
+    return post(`/${GAME_ID}/moves`)
+        .then(({changedCells, situation, status, whoseTurn: turn, lastMove}) => {
+            mapToSituation(situation)
+            currentStatus = status
+            whoseTurn = turn
+
+            return {
+                changedCells: mapToCellList(changedCells),
+                lastMove
+            }
         })
 }

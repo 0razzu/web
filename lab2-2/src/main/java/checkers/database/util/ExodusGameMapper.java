@@ -128,7 +128,7 @@ public class ExodusGameMapper {
         return new Move(
                 ((List<String>) GSON.fromJson(fields[0], strList)).stream()
                         .map(stepStr -> toStep(stepStr, board)).collect(Collectors.toList()),
-                Boolean.getBoolean(fields[1]),
+                Boolean.valueOf(fields[1]),
                 Team.valueOf(fields[2])
         );
     }

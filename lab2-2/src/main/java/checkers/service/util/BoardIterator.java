@@ -19,7 +19,10 @@ public class BoardIterator implements Iterator<Cell> {
     
     @Override
     public boolean hasNext() {
-        return row > 0 && row < board.length - 1 && col > 0 && col < board.length - 1;
+        return row + directionRow >= 0
+                && row + directionRow <= board.length - 1
+                && col + directionCol >= 0
+                && col + directionCol <= board.length - 1;
     }
     
     

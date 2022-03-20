@@ -2,6 +2,7 @@ package checkers.controller.back;
 
 
 import checkers.dto.request.CreateGameRequest;
+import checkers.dto.response.ApplyCurrentMoveResponse;
 import checkers.dto.response.CreateGameResponse;
 import checkers.dto.response.GetGameResponse;
 import checkers.dto.response.EditCurrentMoveResponse;
@@ -34,6 +35,12 @@ public class GameController {
             consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public EditCurrentMoveResponse makeStep(@PathVariable("id") String gameId, @RequestBody StepDto request) {
         return gameService.makeStep(gameId, request);
+    }
+    
+    
+    @PostMapping(path = "/{id}/moves", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ApplyCurrentMoveResponse applyCurrentMove(@PathVariable("id") String gameId) {
+        return gameService.applyCurrentMove(gameId);
     }
     
     

@@ -24,10 +24,10 @@ public class Game {
     private boolean becomeKing;
     
     
-    public Game(Cell[][] board, Team whoseTurn) {
+    public Game(Cell[][] board, Team whoseTurn, Status status) {
         this.board = board;
         this.whoseTurn = whoseTurn;
-        status = Status.RUNNING;
+        this.status = status;
         moveList = new ArrayList<>();
         killed = new ArrayList<>();
     }

@@ -61,8 +61,8 @@ public class ToDtoMapper {
     }
     
     
-    public static CreateGameResponse map(String id, Multimap<Cell, PossibleMove> situation) {
-        return new CreateGameResponse(id, map(situation));
+    public static CreateGameResponse map(String id, Multimap<Cell, PossibleMove> situation, Status status, Team whoseTurn) {
+        return new CreateGameResponse(id, map(situation), status, whoseTurn);
     }
     
     
@@ -113,6 +113,18 @@ public class ToDtoMapper {
                 map(game.getCurrentMove()),
                 game.getKilled().stream().map(ToDtoMapper::map).collect(Collectors.toList()),
                 game.isBecomeKing()
+        );
+    }
+    
+    
+    public static ApplyCurrentMoveResponse map(List<Cell> changedCells, Multimap<Cell, PossibleMove> situation,
+                                               Status status, Team whoseTurn, Move lastMove) {
+        return new ApplyCurrentMoveResponse(
+                map(changedCells),
+                map(situation),
+                status,
+                whoseTurn,
+                map(lastMove)
         );
     }
 }

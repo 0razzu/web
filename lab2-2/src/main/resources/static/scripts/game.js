@@ -8,10 +8,9 @@ let inMove = false
 let moveList = []
 let becomeKing = false
 let killed = []
-let whoseTurn = 'w'
+let whoseTurn = null
+let currentStatus = null
 let buttonsVisible = false
-let whiteCounter = 0
-let blackCounter = 0
 
 const CELL_STATE = {
     DEFAULT: 'DEFAULT',
@@ -38,11 +37,13 @@ const CHECKER_PIC = {
     [CHECKER_TYPE.WHITE]: ROOT + '/img/white-checker.svg',
     [CHECKER_TYPE.WHITE_KING]: ROOT + '/img/white-checker-king.svg',
 }
-const CHECKER_COLOR = {
-    [CHECKER_TYPE.BLACK]: 'b',
-    [CHECKER_TYPE.BLACK_KING]: 'b',
-    [CHECKER_TYPE.WHITE]: 'w',
-    [CHECKER_TYPE.WHITE_KING]: 'w',
+const TEAM = {
+    BLACK: 'BLACK',
+    WHITE: 'WHITE',
+}
+const STATUS = {
+    RUNNING: 'RUNNING',
+    OVER: 'OVER',
 }
 
 const statusStr = document.getElementById('status')
@@ -111,11 +112,18 @@ const toggleTurn = () => {
 
 
 const renderStatus = () => {
-    if (whiteCounter === 0 || blackCounter === 0 || SITUATION.size === 0)
-        statusStr.innerText = 'Выиграли ' + (whoseTurn === 'w'? 'чёрные' : 'белые')
+    if (!whoseTurn)
+        statusStr.innerText = 'Игра завершена'
 
-    else
-        statusStr.innerText = 'Ходят ' + (whoseTurn === 'w'? 'белые' : 'чёрные')
+    else {
+        const whoseTurnStr = (whoseTurn === TEAM.WHITE? 'белые' : 'чёрные')
+
+        if (currentStatus === STATUS.OVER)
+            statusStr.innerText = 'Выиграли ' + whoseTurnStr
+
+        else
+            statusStr.innerText = 'Ходят ' + whoseTurnStr
+    }
 }
 
 
@@ -160,26 +168,27 @@ const pushCurMovesToMoveList = () => {
 }
 
 
-const renderMoveListEntry = entry => {
-    const delimiter = entry.haveKilled? ':' : '-'
+const renderMoveListEntry = move => {
+    const delimiter = move.haveKilled? ':' : '-'
+    const steps = move.steps
+    let cells = steps.map(step => step.from)
+    cells.push(steps[steps.length - 1].to)
+    const moveStr = cells.map(cell => cellToString(cell)).join(delimiter)
 
-    if (entry.whoseTurn === 'w') {
+    if (move.whoseTurn === TEAM.WHITE) {
         const turnView = document.createElement('li')
-        turnView.appendChild(document.createTextNode(entry.moves.map(cell => cellToString(cell)).join(delimiter)))
+        turnView.appendChild(document.createTextNode(moveStr))
         moveListView.appendChild(turnView)
     }
 
     else {
         const moveViews = moveListView.getElementsByTagName('li')
         const turnView = moveViews[moveViews.length - 1]
-        turnView.textContent += ' ' + entry.moves.map(cell => cellToString(cell)).join(delimiter)
+        turnView.textContent += ' ' + moveStr
     }
 
     moveListView.scrollTop = moveListView.scrollHeight
 }
-
-
-const renderLastMoveListEntry = () => renderMoveListEntry(moveList[moveList.length - 1])
 
 
 const renderMoveList = () => {
@@ -208,8 +217,8 @@ const isTurnOf = (row, col) => {
 
     const type = BOARD[row][col].checker.type
 
-    return (whoseTurn === 'w' && (type === CHECKER_TYPE.WHITE || type === CHECKER_TYPE.WHITE_KING)) ||
-        (whoseTurn === 'b' && (type === CHECKER_TYPE.BLACK || type === CHECKER_TYPE.BLACK_KING))
+    return (whoseTurn === TEAM.WHITE && (type === CHECKER_TYPE.WHITE || type === CHECKER_TYPE.WHITE_KING)) ||
+        (whoseTurn === TEAM.BLACK && (type === CHECKER_TYPE.BLACK || type === CHECKER_TYPE.BLACK_KING))
 }
 
 
@@ -251,6 +260,8 @@ const hintOrMove = async (row, col) => {
 
     else if (targetCell.state === CELL_STATE.CAN_BE_FILLED || targetCell.state === CELL_STATE.MUST_BE_FILLED) {
         changedCells = await makeStep({from: inPromptMode, to: targetCell})
+
+        inPromptMode = (targetCell.state === CELL_STATE.PROMPT)? targetCell : null
         inMove = true
         buttonsVisible = true
     }
@@ -299,11 +310,12 @@ const performTurns = turns => {
 
 
 const cellOnClick = (row, col) => {
-    hintOrMove(row, col)
-        .then(changedCells => {
-            changedCells.forEach(cell => renderCell(cell.row, cell.col))
-            renderButtons()
-        })
+    if (currentStatus === STATUS.RUNNING)
+        hintOrMove(row, col)
+            .then(changedCells => {
+                changedCells.forEach(cell => renderCell(cell.row, cell.col))
+                renderButtons()
+            })
 }
 
 
@@ -449,37 +461,10 @@ const cancelTurnButtonOnClick = () => {
         .then(changedCells => {
             changedCells.forEach(cell => renderCell(cell.row, cell.col))
             buttonsVisible = false
-            inPromptMode = null
             inMove = false
+            inPromptMode = null
             renderButtons()
         })
-}
-
-
-const finishTurn = () => {
-    for (let cell of killed) {
-        const {row, col} = cell
-        clear(row, col)
-        BOARD[row][col].state = CELL_STATE.DEFAULT
-    }
-
-    if (whoseTurn === 'w')
-        blackCounter -= killed.length
-    else
-        whiteCounter -= killed.length
-
-    pushCurMovesToMoveList()
-
-    toggleTurn()
-    // calculateSituation()
-}
-
-
-const clearAfterTurnFinish = () => {
-    inMove = false
-    becomeKing = false
-    killed = []
-    buttonsVisible = false
 }
 
 
@@ -487,16 +472,16 @@ const finishTurnButtonOnClick = () => {
     if (!inMove || inPromptMode !== null)
         return
 
-    finishTurn()
-
-    for (let cell of killed)
-        renderCell(cell.row, cell.col)
-
-    clearAfterTurnFinish()
-
-    renderLastMoveListEntry()
-    renderStatus()
-    renderButtons()
+    applyTurn()
+        .then(({changedCells, lastMove}) => {
+            changedCells.forEach(cell => renderCell(cell.row, cell.col))
+            buttonsVisible = false
+            inMove = false
+            inPromptMode = null
+            renderStatus()
+            renderButtons()
+            renderMoveListEntry(lastMove)
+        })
 }
 
 
