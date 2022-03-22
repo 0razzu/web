@@ -81,12 +81,17 @@ const parseTurns = async moveList => {
             moveList
         })
     )
-        .then(({id, board, situation, status, whoseTurn: turn}) => {
+        .then(({id, board, situation, status, whoseTurn: turn, moveList: moveListPerformed, errorCode, reason}) => {
+            if (errorCode)
+                throw {errorCode, reason}
+
             GAME_ID = id
             mapToBoard(board)
             mapToSituation(situation)
             currentStatus = status
             whoseTurn = turn
+
+            return moveListPerformed
         })
 }
 

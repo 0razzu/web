@@ -5,7 +5,6 @@ let SITUATION = new Map()
 let GAME_ID
 let inPromptMode = null
 let inMove = false
-let moveList = []
 let becomeKing = false
 let killed = []
 let whoseTurn = null
@@ -112,7 +111,10 @@ const toggleTurn = () => {
 
 
 const renderStatus = () => {
-    if (!whoseTurn)
+    if (!GAME_ID)
+        statusStr.innerText = 'Никто не ходит'
+
+    else if (!whoseTurn)
         statusStr.innerText = 'Игра завершена'
 
     else {
@@ -159,16 +161,7 @@ const stringToCell = string => {
 }
 
 
-const pushCurMovesToMoveList = () => {
-    moveList.push({
-        moves: [...curMoves],
-        haveKilled: killed.length !== 0,
-        whoseTurn: whoseTurn,
-    })
-}
-
-
-const renderMoveListEntry = move => {
+const renderMoveListEntry = move => { // TODO delete
     const delimiter = move.haveKilled? ':' : '-'
     const steps = move.steps
     let cells = steps.map(step => step.from)
@@ -191,7 +184,7 @@ const renderMoveListEntry = move => {
 }
 
 
-const renderMoveList = () => {
+const renderMoveList = moveList => {
     moveListView.innerHTML = ''
     moveList.forEach(entry => renderMoveListEntry(entry))
 }
@@ -253,45 +246,6 @@ const hintOrMove = async (row, col) => {
     }
 
     return changedCells
-}
-
-
-const performHalfTurn = (halfTurn, haveKilled) => {
-    let changedCells = []
-
-    killed = []
-    halfTurn.forEach(cell => {
-        changedCells = hintOrMove(cell.row, cell.col)
-    })
-
-    if (changedCells.length === 0)
-        throw new Error('Useless click')
-
-    else if ((killed.length === 0 && haveKilled) || (killed.length !== 0 && !haveKilled))
-        throw new Error('Factual killed do not correspond stated ones')
-
-    finishTurn()
-    clearAfterTurnFinish()
-}
-
-
-const performTurns = turns => {
-    for (let lineIndex = 0; lineIndex < turns.length; lineIndex++) {
-        const turn = turns[lineIndex]
-
-        try {
-            if (turn.white !== undefined)
-                performHalfTurn(turn.white, turn.whiteHaveKilled)
-
-            if (turn.black !== undefined)
-                performHalfTurn(turn.black, turn.blackHaveKilled)
-        } catch (e) {
-            return lineIndex
-        }
-
-        if (turn.white === undefined || (turn.black === undefined && lineIndex !== turns.length - 1))
-            return lineIndex
-    }
 }
 
 
@@ -357,7 +311,6 @@ const resetEverything = () => {
     SITUATION.clear()
     inPromptMode = null
     inMove = false
-    moveList = []
     becomeKing = false
     killed = []
     whoseTurn = null
@@ -369,7 +322,6 @@ const renderEverything = () => {
     renderBoard()
     renderStatus()
     renderButtons()
-    renderMoveList()
 }
 
 
@@ -462,51 +414,24 @@ const moveListViewOnCopy = event => {
 }
 
 
-// const parseTurns = lines => {
-//     let result = {turns: []}
-//
-//     for (let line of lines) {
-//         const splitLine = line.split(/\s+/)
-//
-//         try {
-//             result.turns.push({
-//                 white: splitLine[1]?.split(/[-:]/).map(cellStr => stringToCell(cellStr)),
-//                 whiteHaveKilled: splitLine[1]?.includes(':'),
-//                 black: splitLine[2]?.split(/[-:]/).map(cellStr => stringToCell(cellStr)),
-//                 blackHaveKilled: splitLine[2]?.includes(':'),
-//             })
-//         } catch (e) {
-//             result.errorLine = line
-//             break
-//         }
-//     }
-//
-//     return result
-// }
-
-
 const showTurnsButtonOnClick = () => {
     resetEverything()
     startArrangement()
 
     parseTurns(moveListInput.value.split('\n').map(line => line.trim()).filter(line => line !== ''))
-        .then(() => {
+        .then(moveList => {
+            toggleInputTurnsButtonCaption()
+            toggleMoveListViewAndInputVisibility()
 
+            renderEverything()
+            renderMoveList(moveList)
         })
+        .catch(({errorCode, reason}) => {
+            console.dir({errorCode, reason})
 
-    // const lines = moveListInput.value.split('\n').map(line => line.trim()).filter(line => line !== '')
-    // let {turns, errorLine} = parseTurns(lines)
-    // errorLine = lines[performTurns(turns)]?? errorLine
-    //
-    // renderEverything()
-    //
-    // if (errorLine !== undefined) {
-    //     writeToErrorField('Не\xa0удалось прочитать партию. Строка с\xa0ошибкой:', errorLine)
-    //     return
-    // }
-    //
-    // toggleInputTurnsButtonCaption()
-    // toggleMoveListViewAndInputVisibility()
+            writeToErrorField('Не\xa0удалось прочитать партию. Строка с\xa0ошибкой:', reason)
+            renderEverything()
+        })
 }
 
 

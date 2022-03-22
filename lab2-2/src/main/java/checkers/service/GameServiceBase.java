@@ -398,6 +398,7 @@ public class GameServiceBase {
         killed.clear();
         game.getMoveList().add(game.getCurrentMove());
         game.setCurrentMove(null);
+        game.setBecomeKing(false);
         
         if (countEnemies(game.getWhoseTurn(), board) == 0) {
             game.setSituation(ArrayListMultimap.create());
