@@ -12,6 +12,8 @@ import com.google.common.collect.Multimap;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static checkers.service.GameServiceBase.BOARD_SIZE;
+
 
 public class ToDtoMapper {
     public static CellDto map(Cell cell) {
@@ -61,8 +63,21 @@ public class ToDtoMapper {
     }
     
     
-    public static CreateGameResponse map(String id, Multimap<Cell, PossibleMove> situation, Status status, Team whoseTurn) {
-        return new CreateGameResponse(id, map(situation), status, whoseTurn);
+    public static CreateGameResponse map(String id, Multimap<Cell, PossibleMove> situation, Team whoseTurn, Status status) {
+        return new CreateGameResponse(id, map(situation), whoseTurn, status);
+    }
+    
+    
+    public static CreateGameResponse map(String id, Cell[][] board, Team whoseTurn, Status status,
+                                         Multimap<Cell, PossibleMove> situation, List<Move> moveList) {
+        return new CreateGameResponse(
+                id,
+                map(board),
+                whoseTurn,
+                status,
+                map(situation),
+                moveList.stream().map(ToDtoMapper::map).collect(Collectors.toList())
+        );
     }
     
     
@@ -75,12 +90,15 @@ public class ToDtoMapper {
     
     
     public static List<List<FullCellDto>> map(Cell[][] board) {
-        return Arrays.stream(board).map(row -> Arrays.stream(row).map(cell -> new FullCellDto(
-                cell.getRow(),
-                cell.getCol(),
-                cell.getState(),
-                cell.getChecker()
-        )).collect(Collectors.toList())).collect(Collectors.toList());
+        return Arrays.stream(board).map(row -> Arrays.stream(row).map(cell -> cell != null?
+                new FullCellDto(
+                        cell.getRow(),
+                        cell.getCol(),
+                        cell.getState(),
+                        cell.getChecker()
+                ) :
+                null
+        ).collect(Collectors.toList())).collect(Collectors.toList());
     }
     
     

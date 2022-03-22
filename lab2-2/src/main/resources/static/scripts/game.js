@@ -197,20 +197,6 @@ const renderMoveList = () => {
 }
 
 
-const isWhite = (row, col) => {
-    const type = BOARD[row][col]?.checker?.type
-
-    return type == CHECKER_TYPE.WHITE || type == CHECKER_TYPE.WHITE_KING
-}
-
-
-const isBlack = (row, col) => {
-    const type = BOARD[row][col]?.checker?.type
-
-    return type === CHECKER_TYPE.BLACK || type === CHECKER_TYPE.BLACK_KING
-}
-
-
 const isTurnOf = (row, col) => {
     if (!hasChecker(row, col))
         return false
@@ -360,21 +346,6 @@ const example1Arrangement = () => {
 }
 
 
-const countCheckers = () => {
-    whiteCounter = 0
-    blackCounter = 0
-
-    for (let row = 0; row < BOARD_SIZE; row++)
-        for (let col = 0; col < BOARD_SIZE; col++) {
-            if (isWhite(row, col))
-                whiteCounter++
-
-            else if (isBlack(row, col))
-                blackCounter++
-        }
-}
-
-
 const resetEverything = () => {
     for (let row = 0; row < BOARD_SIZE; row++)
         for (let col = 0; col < BOARD_SIZE; col++)
@@ -389,7 +360,7 @@ const resetEverything = () => {
     moveList = []
     becomeKing = false
     killed = []
-    whoseTurn = 'w'
+    whoseTurn = null
     buttonsVisible = false
 }
 
@@ -442,7 +413,6 @@ const toggleMoveListViewAndInputVisibility = () => {
 const arrangementButtonOnClick = arrangement => {
     resetEverything()
     arrangement()
-    countCheckers()
     createGame().then(() => renderEverything())
 }
 
@@ -492,45 +462,51 @@ const moveListViewOnCopy = event => {
 }
 
 
-const parseTurns = lines => {
-    let result = {turns: []}
-
-    for (let line of lines) {
-        const splitLine = line.split(/\s+/)
-
-        try {
-            result.turns.push({
-                white: splitLine[1]?.split(/[-:]/).map(cellStr => stringToCell(cellStr)),
-                whiteHaveKilled: splitLine[1]?.includes(':'),
-                black: splitLine[2]?.split(/[-:]/).map(cellStr => stringToCell(cellStr)),
-                blackHaveKilled: splitLine[2]?.includes(':'),
-            })
-        } catch (e) {
-            result.errorLine = line
-            break
-        }
-    }
-
-    return result
-}
+// const parseTurns = lines => {
+//     let result = {turns: []}
+//
+//     for (let line of lines) {
+//         const splitLine = line.split(/\s+/)
+//
+//         try {
+//             result.turns.push({
+//                 white: splitLine[1]?.split(/[-:]/).map(cellStr => stringToCell(cellStr)),
+//                 whiteHaveKilled: splitLine[1]?.includes(':'),
+//                 black: splitLine[2]?.split(/[-:]/).map(cellStr => stringToCell(cellStr)),
+//                 blackHaveKilled: splitLine[2]?.includes(':'),
+//             })
+//         } catch (e) {
+//             result.errorLine = line
+//             break
+//         }
+//     }
+//
+//     return result
+// }
 
 
 const showTurnsButtonOnClick = () => {
-    arrangementButtonOnClick(startArrangement)
+    resetEverything()
+    startArrangement()
 
-    const lines = moveListInput.value.split('\n').map(line => line.trim()).filter(line => line !== '')
-    let {turns, errorLine} = parseTurns(lines)
-    errorLine = lines[performTurns(turns)]?? errorLine
+    parseTurns(moveListInput.value.split('\n').map(line => line.trim()).filter(line => line !== ''))
+        .then(() => {
 
-    renderEverything()
+        })
 
-    if (errorLine !== undefined) {
-        writeToErrorField('Не\xa0удалось прочитать партию. Строка с\xa0ошибкой:', errorLine)
-        return
-    }
-
-    toggleInputTurnsButtonCaption()
-    toggleMoveListViewAndInputVisibility()
+    // const lines = moveListInput.value.split('\n').map(line => line.trim()).filter(line => line !== '')
+    // let {turns, errorLine} = parseTurns(lines)
+    // errorLine = lines[performTurns(turns)]?? errorLine
+    //
+    // renderEverything()
+    //
+    // if (errorLine !== undefined) {
+    //     writeToErrorField('Не\xa0удалось прочитать партию. Строка с\xa0ошибкой:', errorLine)
+    //     return
+    // }
+    //
+    // toggleInputTurnsButtonCaption()
+    // toggleMoveListViewAndInputVisibility()
 }
 
 

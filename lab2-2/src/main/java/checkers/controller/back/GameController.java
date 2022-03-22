@@ -4,9 +4,10 @@ package checkers.controller.back;
 import checkers.dto.request.CreateGameRequest;
 import checkers.dto.response.ApplyCurrentMoveResponse;
 import checkers.dto.response.CreateGameResponse;
-import checkers.dto.response.GetGameResponse;
 import checkers.dto.response.EditCurrentMoveResponse;
+import checkers.dto.response.GetGameResponse;
 import checkers.dto.versatile.StepDto;
+import checkers.error.CheckersException;
 import checkers.service.GameService;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -26,14 +27,19 @@ public class GameController {
     
     
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public CreateGameResponse createGame(@RequestBody CreateGameRequest request) {
-        return gameService.createGame(request);
+    public CreateGameResponse createGame(@RequestBody CreateGameRequest request) throws CheckersException {
+        if (request.getMoveList() == null)
+            return gameService.createGame(request);
+        
+        else
+            return gameService.createGameFromMoveList(request);
     }
     
     
     @PostMapping(path = "/{id}/currentMove/steps",
             consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public EditCurrentMoveResponse makeStep(@PathVariable("id") String gameId, @RequestBody StepDto request) {
+    public EditCurrentMoveResponse makeStep(@PathVariable("id") String gameId, @RequestBody StepDto request)
+            throws CheckersException {
         return gameService.makeStep(gameId, request);
     }
     

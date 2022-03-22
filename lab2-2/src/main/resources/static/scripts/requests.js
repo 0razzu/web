@@ -39,20 +39,24 @@ const mapToSituation = situationDto => {
 }
 
 
-const mapToCellList = cells => {
-    const cellList = []
+const mapToBoardCell = cell => {
+    const boardCell = BOARD[cell.row][cell.col]
 
-    for (const cell of cells) {
-        const boardCell = BOARD[cell.row][cell.col]
+    boardCell.state = cell.state
+    boardCell.checker = cell.checker? {type: cell.checker, cell: boardCell} : null  // TODO: is «cell» necessary?
 
-        boardCell.state = cell.state
-        boardCell.checker = cell.checker? {type: cell.checker, cell: boardCell} : null  // TODO: is «cell» necessary?
-
-        cellList.push(boardCell)
-    }
-
-    return cellList
+    return boardCell
 }
+
+
+const mapToCellList = cells => cells.map(cell => mapToBoardCell(cell))
+
+
+const mapToBoard = board => board.forEach(row =>
+    row.forEach(cell =>
+        cell && mapToBoardCell(cell)
+    )
+)
 
 
 const createGame = async () => {
@@ -62,6 +66,24 @@ const createGame = async () => {
     )
         .then(({id, situation, status, whoseTurn: turn}) => {
             GAME_ID = id
+            mapToSituation(situation)
+            currentStatus = status
+            whoseTurn = turn
+        })
+}
+
+
+const parseTurns = async moveList => {
+    return post(
+        '',
+        JSON.stringify({
+            board: BOARD.map(row => row.map(cell => cell.checker?.type)),
+            moveList
+        })
+    )
+        .then(({id, board, situation, status, whoseTurn: turn}) => {
+            GAME_ID = id
+            mapToBoard(board)
             mapToSituation(situation)
             currentStatus = status
             whoseTurn = turn
@@ -84,6 +106,7 @@ const makeStep = async ({from, to}) => {
         })
 }
 
+
 const cancelTurn = async () => {
     return del(`/${GAME_ID}/currentMove`)
         .then(({changedCells, situation}) => {
@@ -92,6 +115,7 @@ const cancelTurn = async () => {
             return mapToCellList(changedCells)
         })
 }
+
 
 const applyTurn = async () => {
     return post(`/${GAME_ID}/moves`)

@@ -1,6 +1,8 @@
 package checkers.dto.response;
 
 
+import checkers.dto.versatile.FullCellDto;
+import checkers.dto.versatile.MoveDto;
 import checkers.model.Status;
 import checkers.model.Team;
 import lombok.AllArgsConstructor;
@@ -15,7 +17,17 @@ import java.util.List;
 @AllArgsConstructor
 public class CreateGameResponse {
     private String id;
-    private List<SituationEntryDto> situation;
-    private Status status;
+    private List<List<FullCellDto>> board;
     private Team whoseTurn;
+    private Status status;
+    private List<SituationEntryDto> situation;
+    private List<MoveDto> moveList;
+    
+    
+    public CreateGameResponse(String id, List<SituationEntryDto> situation, Team whoseTurn, Status status) {
+        this.id = id;
+        this.situation = situation;
+        this.whoseTurn = whoseTurn;
+        this.status = status;
+    }
 }
