@@ -21,7 +21,7 @@ public class CreateGameResponse {
     private Team whoseTurn;
     private Status status;
     private List<SituationEntryDto> situation;
-    private List<MoveDto> moveList;
+    private List<String> moveList;
     
     
     public CreateGameResponse(String id, List<SituationEntryDto> situation, Team whoseTurn, Status status) {

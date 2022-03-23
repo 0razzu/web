@@ -105,11 +105,6 @@ const renderBoard = () => {
 }
 
 
-const toggleTurn = () => {
-    whoseTurn = whoseTurn === 'w'? 'b' : 'w'
-}
-
-
 const renderStatus = () => {
     if (!GAME_ID)
         statusStr.innerText = 'Никто не ходит'
@@ -142,43 +137,29 @@ const renderButtons = () => {
 }
 
 
-const cellToString = cell => {
-    const letters = 'abcdefgh'
+const renderMove = moveStr => {
+    const moveViews = moveListView.getElementsByTagName('li')
+    let turnView = moveViews[moveViews.length - 1]
 
-    return letters[cell.col] + (cell.row + 1)
-}
-
-
-const stringToCell = string => {
-    const letters = 'abcdefgh'
-    const row = Number(string[1]) - 1
-    const col = letters.indexOf(string[0])
-
-    if (!isPlayCell(row, col) || string.length != 2)
-        return null
-
-    return BOARD[row][col]
-}
-
-
-const renderMoveListEntry = move => { // TODO delete
-    const delimiter = move.haveKilled? ':' : '-'
-    const steps = move.steps
-    let cells = steps.map(step => step.from)
-    cells.push(steps[steps.length - 1].to)
-    const moveStr = cells.map(cell => cellToString(cell)).join(delimiter)
-
-    if (move.whoseTurn === TEAM.WHITE) {
-        const turnView = document.createElement('li')
+    if (!turnView || turnView.textContent.split(' ').length === 2) {
+        turnView = document.createElement('li')
         turnView.appendChild(document.createTextNode(moveStr))
         moveListView.appendChild(turnView)
     }
 
-    else {
-        const moveViews = moveListView.getElementsByTagName('li')
-        const turnView = moveViews[moveViews.length - 1]
+    else
         turnView.textContent += ' ' + moveStr
-    }
+
+    moveListView.scrollTop = moveListView.scrollHeight
+}
+
+
+const renderMoveListEntry = movePairStr => {
+    const movePairStrNoNum = movePairStr.split('. ')[1]
+
+    const turnView = document.createElement('li')
+    turnView.appendChild(document.createTextNode(movePairStrNoNum))
+    moveListView.appendChild(turnView)
 
     moveListView.scrollTop = moveListView.scrollHeight
 }
@@ -186,7 +167,7 @@ const renderMoveListEntry = move => { // TODO delete
 
 const renderMoveList = moveList => {
     moveListView.innerHTML = ''
-    moveList.forEach(entry => renderMoveListEntry(entry))
+    moveList.forEach(line => renderMoveListEntry(line))
 }
 
 
@@ -402,7 +383,7 @@ const finishTurnButtonOnClick = () => {
             inPromptMode = null
             renderStatus()
             renderButtons()
-            renderMoveListEntry(lastMove)
+            renderMove(lastMove)
         })
 }
 

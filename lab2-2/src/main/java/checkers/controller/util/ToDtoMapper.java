@@ -4,15 +4,12 @@ package checkers.controller.util;
 import checkers.dto.response.*;
 import checkers.dto.versatile.CellDto;
 import checkers.dto.versatile.FullCellDto;
-import checkers.dto.versatile.MoveDto;
 import checkers.dto.versatile.StepDto;
 import checkers.model.*;
 import com.google.common.collect.Multimap;
 
 import java.util.*;
 import java.util.stream.Collectors;
-
-import static checkers.service.GameServiceBase.BOARD_SIZE;
 
 
 public class ToDtoMapper {
@@ -63,6 +60,44 @@ public class ToDtoMapper {
     }
     
     
+    public static String mapCellToStr(Cell cell) {
+        String letters = "abcdefgh";
+        
+        return String.valueOf(letters.charAt(cell.getCol())) + (cell.getRow() + 1);
+    }
+    
+    
+    public static String mapMoveToStr(Move move) {
+        String delimiter = move.isHaveKilled()? ":" : "-";
+        List<Step> steps = move.getSteps();
+        List<Cell> cells = steps.stream().map(Step::getFrom).collect(Collectors.toList());
+        cells.add(steps.get(steps.size() - 1).getTo());
+        
+        return cells.stream().map(ToDtoMapper::mapCellToStr).collect(Collectors.joining(delimiter));
+    }
+    
+    
+    public static List<String> mapMoveListToStr(List<Move> moveList) {
+        int moveListSize = moveList.size();
+        List<String> moveListStr = new ArrayList<>(moveListSize / 2 + 1);
+        
+        for (int i = 0; i < moveListSize; i += 2)
+            if (i + 1 < moveListSize)
+                moveListStr.add(String.format("%d. %s %s",
+                        i / 2 + 1,
+                        mapMoveToStr(moveList.get(i)),
+                        mapMoveToStr(moveList.get(i + 1))
+                ));
+            else
+                moveListStr.add(String.format("%d. %s",
+                        i / 2 + 1,
+                        mapMoveToStr(moveList.get(i))
+                ));
+        
+        return moveListStr;
+    }
+    
+    
     public static CreateGameResponse map(String id, Multimap<Cell, PossibleMove> situation, Team whoseTurn, Status status) {
         return new CreateGameResponse(id, map(situation), whoseTurn, status);
     }
@@ -76,7 +111,7 @@ public class ToDtoMapper {
                 whoseTurn,
                 status,
                 map(situation),
-                moveList.stream().map(ToDtoMapper::map).collect(Collectors.toList())
+                mapMoveListToStr(moveList)
         );
     }
     
@@ -110,25 +145,14 @@ public class ToDtoMapper {
     }
     
     
-    public static MoveDto map(Move move) {
-        return move == null?
-                null :
-                new MoveDto(
-                        move.getSteps().stream().map(ToDtoMapper::map).collect(Collectors.toList()),
-                        move.isHaveKilled(),
-                        move.getWhoseTurn()
-                );
-    }
-    
-    
     public static GetGameResponse map(Game game) {
         return new GetGameResponse(
                 map(game.getBoard()),
                 game.getWhoseTurn(),
                 game.getStatus(),
                 map(game.getSituation()),
-                game.getMoveList().stream().map(ToDtoMapper::map).collect(Collectors.toList()),
-                map(game.getCurrentMove()),
+                mapMoveListToStr(game.getMoveList()),
+                mapMoveToStr(game.getCurrentMove()),
                 game.getKilled().stream().map(ToDtoMapper::map).collect(Collectors.toList()),
                 game.isBecomeKing()
         );
@@ -142,7 +166,7 @@ public class ToDtoMapper {
                 map(situation),
                 status,
                 whoseTurn,
-                map(lastMove)
+                mapMoveToStr(lastMove)
         );
     }
 }

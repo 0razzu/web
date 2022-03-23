@@ -21,8 +21,8 @@ public class GetGameResponse {
     private Team whoseTurn;
     private Status status;
     private List<SituationEntryDto> situation;
-    private List<MoveDto> moveList;
-    private MoveDto currentMove;
+    private List<String> moveList;
+    private String currentMove;
     private List<CellDto> killed;
     private boolean becomeKing;
 }

@@ -57,10 +57,10 @@ public class GameService extends GameServiceBase {
                 try {
                     String[] splitLine = line.split("\\s+");
                     
-                    makeMove(strToMove(splitLine[1], Team.WHITE, board), game);
+                    makeMove(FromDtoMapper.strToMove(splitLine[1], Team.WHITE, board), game);
                     
                     if (lineIndex != moveListStr.size() - 1 || splitLine.length == 3)
-                        makeMove(strToMove(splitLine[2], Team.BLACK, board), game);
+                        makeMove(FromDtoMapper.strToMove(splitLine[2], Team.BLACK, board), game);
                 } catch (CheckersException | ArrayIndexOutOfBoundsException e) {
                     throw new CheckersException(PARSING_ERROR, line, e);
                 }

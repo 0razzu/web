@@ -20,5 +20,5 @@ public class ApplyCurrentMoveResponse {
     private List<SituationEntryDto> situation;
     private Status status;
     private Team whoseTurn;
-    private MoveDto lastMove;
+    private String lastMove;
 }
