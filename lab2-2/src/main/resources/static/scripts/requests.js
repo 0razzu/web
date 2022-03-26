@@ -98,7 +98,7 @@ const parseTurns = async moveList => {
             moveList
         })
     )
-        .then(({id, board, situation, status, whoseTurn: turn, moveList: moveListPerformed, errorCode, reason}) => {
+        .then(({id, board, situation, status, whoseTurn: turn, moveList, errorCode, reason}) => {
             if (errorCode)
                 throw {errorCode, reason}
 
@@ -108,7 +108,7 @@ const parseTurns = async moveList => {
             currentStatus = status
             whoseTurn = turn
 
-            return moveListPerformed
+            return moveList
         })
 }
 
@@ -150,6 +150,21 @@ const applyTurn = async () => {
                 changedCells: mapToCellList(changedCells),
                 lastMove
             }
+        })
+}
+
+
+const getGame = async id => {
+    return get(`/${id}`)
+        .then(({id, board, situation, status, whoseTurn: turn, moveList, currentMove}) => {
+            GAME_ID = id
+            mapToBoard(board)
+            mapToSituation(situation)
+            currentStatus = status
+            whoseTurn = turn
+            inMove = currentMove !== undefined
+
+            return moveList
         })
 }
 

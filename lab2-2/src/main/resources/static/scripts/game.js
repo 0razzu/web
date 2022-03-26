@@ -9,7 +9,6 @@ let becomeKing = false
 let killed = []
 let whoseTurn = null
 let currentStatus = null
-let buttonsVisible = false
 
 const CELL_STATE = {
     DEFAULT: 'DEFAULT',
@@ -218,7 +217,7 @@ const renderStatus = () => {
 
 
 const renderButtons = () => {
-    if (buttonsVisible) {
+    if (inMove) {
         cancelTurnButton.classList.remove('hidden')
         finishTurnButton.classList.remove('hidden')
     }
@@ -316,7 +315,6 @@ const hintOrMove = async (row, col) => {
 
         inPromptMode = (targetCell.state === CELL_STATE.PROMPT)? targetCell : null
         inMove = true
-        buttonsVisible = true
     }
 
     return changedCells
@@ -378,7 +376,6 @@ const resetEverything = (resetGameHistoryInterior = true) => {
     becomeKing = false
     killed = []
     whoseTurn = null
-    buttonsVisible = false
 
     if (resetGameHistoryInterior)
         gameHistoryInterior.toggleVisibility(moveListPanel)
@@ -423,13 +420,25 @@ const arrangementButtonOnClick = arrangement => {
 const inputTurnsButtonOnClick = () => gameHistoryInterior.toggleVisibility(moveListInputPanel)
 
 
+const idLinkOnClick = id => {
+    resetEverything()
+
+    getGame(id)
+        .then(moveList => {
+            renderEverything()
+            renderMoveList(moveList)
+        })
+}
+
+
 const parseGameList = games => {
     gameList.innerHTML = ''
 
     games.forEach(({id: gameId, status: gameStatus}) => {
         const idLink = document.createElement('a')
         idLink.appendChild(document.createTextNode(gameId))
-        idLink.href = `${ROOT}/api/games/${gameId}`
+        idLink.href = 'javascript:void(0)'
+        idLink.onclick = () => idLinkOnClick(gameId)
         const status = document.createTextNode(STATUS_VIEW[gameStatus])
 
         const idLinkTd = document.createElement('td')
@@ -460,7 +469,6 @@ const cancelTurnButtonOnClick = () => {
     cancelTurn()
         .then(changedCells => {
             changedCells.forEach(cell => renderCell(cell.row, cell.col))
-            buttonsVisible = false
             inMove = false
             inPromptMode = null
             renderButtons()
@@ -475,7 +483,6 @@ const finishTurnButtonOnClick = () => {
     applyTurn()
         .then(({changedCells, lastMove}) => {
             changedCells.forEach(cell => renderCell(cell.row, cell.col))
-            buttonsVisible = false
             inMove = false
             inPromptMode = null
             renderStatus()
