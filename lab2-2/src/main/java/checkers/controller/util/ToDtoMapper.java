@@ -68,6 +68,9 @@ public class ToDtoMapper {
     
     
     public static String mapMoveToStr(Move move) {
+        if (move == null)
+            return null;
+        
         String delimiter = move.isHaveKilled()? ":" : "-";
         List<Step> steps = move.getSteps();
         List<Cell> cells = steps.stream().map(Step::getFrom).collect(Collectors.toList());
@@ -124,16 +127,15 @@ public class ToDtoMapper {
     }
     
     
-    public static List<List<FullCellDto>> map(Cell[][] board) {
-        return Arrays.stream(board).map(row -> Arrays.stream(row).map(cell -> cell != null?
+    public static List<FullCellDto> map(Cell[][] board) {
+        return Arrays.stream(board).map(row -> Arrays.stream(row).filter(Objects::nonNull).map(cell ->
                 new FullCellDto(
                         cell.getRow(),
                         cell.getCol(),
                         cell.getState(),
                         cell.getChecker()
-                ) :
-                null
-        ).collect(Collectors.toList())).collect(Collectors.toList());
+                )
+        ).collect(Collectors.toList())).collect(ArrayList::new, ArrayList::addAll, ArrayList::addAll);
     }
     
     

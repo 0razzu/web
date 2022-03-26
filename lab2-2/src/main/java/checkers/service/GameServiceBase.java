@@ -11,44 +11,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static checkers.controller.util.GameUtil.*;
 import static checkers.error.CheckersErrorCode.*;
 
 
 public class GameServiceBase {
-    public static final int BOARD_SIZE = 8;
-    
-    
-    protected boolean isPlayCell(int row, int col) {
-        return (row + col) % 2 == 0
-                && row >= 0 && row < BOARD_SIZE
-                && col >= 0 && col < BOARD_SIZE;
-    }
-    
-    
-    protected boolean isTurnOf(int row, int col, Game game) {
-        Cell[][] board = game.getBoard();
-        
-        if (board[row][col].getChecker() == null)
-            return false;
-        
-        Checker checker = board[row][col].getChecker();
-        Team whoseTurn = game.getWhoseTurn();
-        
-        return (whoseTurn == Team.WHITE && (checker == Checker.WHITE || checker == Checker.WHITE_KING)) ||
-                (whoseTurn == Team.BLACK && (checker == Checker.BLACK || checker == Checker.BLACK_KING));
-    }
-    
-    
-    protected boolean areFoes(Cell cell1, Cell cell2) {
-        Checker checker1 = cell1.getChecker();
-        Checker checker2 = cell2.getChecker();
-        
-        return cell1.getState() != CellState.KILLED && cell2.getState() != CellState.KILLED
-                && checker1 != null && checker2 != null
-                && checker1.getTeam() != checker2.getTeam();
-    }
-    
-    
     protected boolean updateSituation(Game game, int row, int col, boolean foundMustBeFilled) {
         if (!isTurnOf(row, col, game))
             return foundMustBeFilled;
@@ -165,17 +132,6 @@ public class GameServiceBase {
     }
     
     
-    protected Cell[][] createBoard(Checker[][] gameDtoBoard) {
-        Cell[][] board = new Cell[BOARD_SIZE][BOARD_SIZE];
-        for (int row = 0; row < BOARD_SIZE; row++)
-            for (int col = 0; col < BOARD_SIZE; col++)
-                if (isPlayCell(row, col))
-                    board[row][col] = new Cell(row, col, CellState.DEFAULT, gameDtoBoard[row][col]);
-        
-        return board;
-    }
-    
-    
     protected Game createGame(Cell[][] board) {
         int whiteCounter = countEnemies(Team.WHITE, board);
         int blackCounter = countEnemies(Team.BLACK, board);
@@ -263,22 +219,6 @@ public class GameServiceBase {
         game.getCurrentMove().getSteps().add(new Step(from, to));
         
         makeKingIfNeeded(to, game);
-    }
-    
-    
-    protected int countEnemies(Team whoseTurn, Cell[][] board) {
-        int counter = 0;
-        
-        for (Cell[] row: board)
-            for (Cell cell: row)
-                if (cell != null) {
-                    Checker checker = cell.getChecker();
-                    
-                    if (checker != null && checker.getTeam() != whoseTurn)
-                        counter++;
-                }
-        
-        return counter;
     }
     
     

@@ -3,7 +3,6 @@ package checkers.dto.response;
 
 import checkers.dto.versatile.CellDto;
 import checkers.dto.versatile.FullCellDto;
-import checkers.dto.versatile.MoveDto;
 import checkers.model.Status;
 import checkers.model.Team;
 import lombok.AllArgsConstructor;
@@ -17,7 +16,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class GetGameResponse {
-    private List<List<FullCellDto>> board;
+    private List<FullCellDto> board;
     private Team whoseTurn;
     private Status status;
     private List<SituationEntryDto> situation;

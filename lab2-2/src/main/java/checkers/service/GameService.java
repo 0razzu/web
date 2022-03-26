@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static checkers.controller.util.FromDtoMapper.map;
 import static checkers.error.CheckersErrorCode.PARSING_ERROR;
 
 
@@ -32,8 +33,8 @@ public class GameService extends GameServiceBase {
     }
     
     
-    public CreateGameResponse createGame(CreateGameRequest request) {
-        Cell[][] board = createBoard(request.getBoard());
+    public CreateGameResponse createGame(CreateGameRequest request) throws CheckersException {
+        Cell[][] board = map(request.getBoard());
         Game game = createGame(board);
         
         return ToDtoMapper.map(
@@ -47,7 +48,7 @@ public class GameService extends GameServiceBase {
     
     public CreateGameResponse createGameFromMoveList(CreateGameRequest request) throws CheckersException {
         List<String> moveListStr = request.getMoveList();
-        Cell[][] board = createBoard(request.getBoard());
+        Cell[][] board = map(request.getBoard());
         Game game = createGame(board);
         
         for (int lineIndex = 0; lineIndex < moveListStr.size(); lineIndex++) {
@@ -80,7 +81,7 @@ public class GameService extends GameServiceBase {
     public EditCurrentMoveResponse makeStep(String gameId, StepDto request) throws CheckersException {
         Game game = gameDao.get(gameId);
         Cell[][] board = game.getBoard();
-        Step step = FromDtoMapper.map(request, board);
+        Step step = map(request, board);
         Cell from = step.getFrom();
         
         if (from.getState() != CellState.PROMPT)

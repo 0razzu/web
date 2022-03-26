@@ -52,17 +52,26 @@ const mapToBoardCell = cell => {
 const mapToCellList = cells => cells.map(cell => mapToBoardCell(cell))
 
 
-const mapToBoard = board => board.forEach(row =>
-    row.forEach(cell =>
-        cell && mapToBoardCell(cell)
-    )
+const mapToBoard = board => board.forEach(cell =>
+    cell && mapToBoardCell(cell)
 )
+
+
+const mapBoardToCellList = () =>
+    BOARD.reduce((acc, row) => acc.concat(row), []).filter(cell => cell).map(cell => ({
+        row: cell.row,
+        col: cell.col,
+        state: cell.state,
+        checker: cell.checker?.type
+    }))
 
 
 const createGame = async () => {
     return post(
         '',
-        JSON.stringify({board: BOARD.map(row => row.map(cell => cell.checker?.type))})
+        JSON.stringify({
+            board: mapBoardToCellList()
+        })
     )
         .then(({id, situation, status, whoseTurn: turn}) => {
             GAME_ID = id
@@ -77,7 +86,7 @@ const parseTurns = async moveList => {
     return post(
         '',
         JSON.stringify({
-            board: BOARD.map(row => row.map(cell => cell.checker?.type)),
+            board: mapBoardToCellList(),
             moveList
         })
     )

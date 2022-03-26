@@ -2,16 +2,17 @@ package checkers.controller.util;
 
 
 import checkers.dto.versatile.CellDto;
+import checkers.dto.versatile.FullCellDto;
 import checkers.dto.versatile.StepDto;
 import checkers.error.CheckersException;
-import checkers.model.Cell;
-import checkers.model.Move;
-import checkers.model.Step;
-import checkers.model.Team;
+import checkers.model.*;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import static checkers.controller.util.GameUtil.BOARD_SIZE;
+import static checkers.controller.util.GameUtil.isPlayCell;
+import static checkers.error.CheckersErrorCode.NO_SUCH_CELL;
 import static checkers.error.CheckersErrorCode.PARSING_ERROR;
 
 
@@ -64,5 +65,22 @@ public class FromDtoMapper {
         }
         
         return new Move(steps, str.contains(":"), whoseTurn);
+    }
+    
+    
+    public static Cell[][] map(List<FullCellDto> gameDtoBoard) throws CheckersException {
+        Cell[][] board = new Cell[BOARD_SIZE][BOARD_SIZE];
+        
+        for (FullCellDto cellDto: gameDtoBoard) {
+            int row = cellDto.getRow();
+            int col = cellDto.getCol();
+            
+            if (!isPlayCell(row, col))
+                throw new CheckersException(NO_SUCH_CELL, cellDto.toString());
+            
+            board[row][col] = new Cell(row, col, cellDto.getState(), cellDto.getChecker());
+        }
+        
+        return board;
     }
 }

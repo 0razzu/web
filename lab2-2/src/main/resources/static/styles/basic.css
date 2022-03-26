@@ -164,6 +164,8 @@ td {
 }
 
 .board {
+    height: calc(70vmin + .2rem);
+    width: calc(70vmin + .2rem);
     border-collapse: collapse;
     box-shadow: .15rem .15rem 0.75rem var(--light-telegray);
     border: none;

@@ -49,6 +49,7 @@ const statusStr = document.getElementById('status')
 const startButton = document.getElementById('start')
 const example1button = document.getElementById('example1')
 const inputTurnsButton = document.getElementById('input-turns')
+const showGameListButton = document.getElementById('show-game-list')
 const cancelTurnButton = document.getElementById('cancel-turn')
 const finishTurnButton = document.getElementById('finish-turn')
 const moveListView = document.getElementById('move-list')
@@ -56,6 +57,86 @@ const moveListInputPanel = document.getElementById('move-list-input-panel')
 const moveListInput = document.getElementById('move-list-input')
 const showTurnsButton = document.getElementById('show-turns')
 const errorField = document.getElementById('error-field')
+const gameListTable = document.getElementById('game-list-table')
+const gameList = document.getElementById('game-list')
+
+
+const visibilityToggler = elem => {
+    return isVisible => {
+        if (isVisible)
+            elem.classList.remove('removed')
+        else
+            elem.classList.add('removed')
+    }
+}
+
+
+const buttonCaptionToggler = (button, captionTrue, captionFalse) => {
+    return condition => button.innerText = condition? captionTrue : captionFalse
+}
+
+
+class GameHistoryElem {
+    constructor(isVisible, setVisibility) {
+        this.isVisible = isVisible
+        this.setVisibility = setVisibility
+    }
+}
+
+
+const gameHistoryInteriorElems = {
+    [moveListView.id]: new GameHistoryElem(
+        true,
+        isVisible => {
+            visibilityToggler(moveListView)(isVisible)
+            this.isVisible = isVisible
+        }
+    ),
+    [moveListInputPanel.id]: new GameHistoryElem(
+        false,
+        isVisible => {
+            visibilityToggler(moveListInputPanel)(isVisible)
+            this.isVisible = isVisible
+            buttonCaptionToggler(inputTurnsButton, 'Закрыть', 'Ввести ходы')(isVisible)
+            moveListInput.value = ''
+            clearErrorField()
+        }
+    ),
+    [gameListTable.id]: new GameHistoryElem(
+        false,
+        isVisible => {
+            visibilityToggler(gameListTable)(isVisible)
+            this.isVisible = isVisible
+            buttonCaptionToggler(showGameListButton, 'Закрыть', 'Список игр')(isVisible)
+        }
+    ),
+}
+
+
+const gameHistoryInterior = new class {
+    constructor(gameHistoryInteriorElems, defaultVisible) {
+        this.gameHistoryInteriorElems = gameHistoryInteriorElems
+        this.currentVisibleId = defaultVisible.id
+        this.defaultVisibleId = defaultVisible.id
+    }
+
+
+    toggleVisibility(elem) {
+        const elemId = elem.id
+
+        this.gameHistoryInteriorElems[this.currentVisibleId].setVisibility(false)
+
+        if (this.currentVisibleId === elemId) {
+            this.gameHistoryInteriorElems[this.defaultVisibleId].setVisibility(true)
+            this.currentVisibleId = this.defaultVisibleId
+        }
+
+        else {
+            this.gameHistoryInteriorElems[elemId].setVisibility(true)
+            this.currentVisibleId = elemId
+        }
+    }
+} (gameHistoryInteriorElems, moveListView)
 
 
 const isPlayCell = (row, col) => (row + col) % 2 === 0 && row >= 0 && row < BOARD_SIZE && col >= 0 && col < BOARD_SIZE
@@ -268,16 +349,6 @@ const example1Arrangement = () => {
     place(CHECKER_TYPE.BLACK, 6, 2)
     place(CHECKER_TYPE.BLACK, 6, 4)
     place(CHECKER_TYPE.BLACK, 5, 7)
-
-    // place(CHECKER_TYPE.WHITE, 5, 1)
-    // place(CHECKER_TYPE.WHITE, 5, 3)
-    // place(CHECKER_TYPE.WHITE, 5, 5)
-    // place(CHECKER_TYPE.WHITE, 5, 7)
-    //
-    // place(CHECKER_TYPE.BLACK, 6, 0)
-    // place(CHECKER_TYPE.BLACK, 6, 2)
-    // place(CHECKER_TYPE.BLACK, 6, 4)
-    // place(CHECKER_TYPE.BLACK, 6, 6)
 }
 
 
@@ -306,11 +377,6 @@ const renderEverything = () => {
 }
 
 
-const toggleInputTurnsButtonCaption = () => {
-    inputTurnsButton.innerText = inputTurnsButton.innerText === 'Ввести ходы'? 'Закрыть' : 'Ввести ходы'
-}
-
-
 const clearErrorField = () => {
     if (!errorField.classList.contains('removed'))
         errorField.classList.add('removed')
@@ -331,29 +397,18 @@ const writeToErrorField = (...lines) => {
 }
 
 
-const toggleMoveListViewAndInputVisibility = () => {
-    if (moveListView.classList.contains('removed'))
-        moveListInput.value = ''
-
-    else
-        clearErrorField()
-
-    moveListView.classList.toggle('removed')
-    moveListInputPanel.classList.toggle('removed')
-}
-
-
 const arrangementButtonOnClick = arrangement => {
     resetEverything()
     arrangement()
     createGame().then(() => renderEverything())
+    moveListView.innerText = ''
 }
 
 
-const inputTurnsButtonOnClick = () => {
-    toggleInputTurnsButtonCaption()
-    toggleMoveListViewAndInputVisibility()
-}
+const inputTurnsButtonOnClick = () => gameHistoryInterior.toggleVisibility(moveListInputPanel)
+
+
+const showGameListButtonOnClick = () => gameHistoryInterior.toggleVisibility(gameListTable)
 
 
 const cancelTurnButtonOnClick = () => {
@@ -401,8 +456,7 @@ const showTurnsButtonOnClick = () => {
 
     parseTurns(moveListInput.value.split('\n').map(line => line.trim()).filter(line => line !== ''))
         .then(moveList => {
-            toggleInputTurnsButtonCaption()
-            toggleMoveListViewAndInputVisibility()
+            gameHistoryInterior.toggleVisibility(moveListInputPanel)
 
             renderEverything()
             renderMoveList(moveList)
@@ -425,12 +479,11 @@ const init = () => {
                 BOARD[row][col] = {row: row, col: col, state: CELL_STATE.DEFAULT}
 
     let col = 0
-
     BOARD_VIEW = Array.from(document.querySelectorAll('.board tr td'))
         .reduce((arr, cell, index) => {
             const row = BOARD_SIZE - 1 - Math.floor(index / BOARD_SIZE)
 
-            arr[row] = arr[row] ?? []
+            arr[row] = arr[row]?? []
             arr[row].push(isPlayCell(row, col)? cell : null)
 
             col = (++col) % BOARD_SIZE
@@ -445,6 +498,7 @@ const init = () => {
     startButton.addEventListener('click', () => arrangementButtonOnClick(startArrangement))
     example1button.addEventListener('click', () => arrangementButtonOnClick(example1Arrangement))
     inputTurnsButton.addEventListener('click', () => inputTurnsButtonOnClick())
+    showGameListButton.addEventListener('click', () => showGameListButtonOnClick())
     cancelTurnButton.addEventListener('click', () => cancelTurnButtonOnClick())
     finishTurnButton.addEventListener('click', () => finishTurnButtonOnClick())
     moveListView.addEventListener('copy', event => moveListViewOnCopy(event))
