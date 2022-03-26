@@ -144,7 +144,7 @@ public class ExodusGameMapper {
         entity.setProperty("currentMove", toString(game.getCurrentMove()));
         entity.setProperty("killed", GSON.toJson(game.getKilled().stream()
                         .map(ExodusGameMapper::toString).collect(Collectors.toList())));
-        entity.setProperty("becomeKing", game.isBecomeKing());
+        entity.setProperty("becomeKing", game.getBecomeKing());
     }
     
     
@@ -152,6 +152,7 @@ public class ExodusGameMapper {
         Cell[][] board = GSON.fromJson((String) entity.getProperty("board"), Cell[][].class);
         
         return new Game(
+                entity.toIdString(),
                 board,
                 Team.valueOf((String) entity.getProperty("whoseTurn")),
                 Status.valueOf((String) entity.getProperty("status")),

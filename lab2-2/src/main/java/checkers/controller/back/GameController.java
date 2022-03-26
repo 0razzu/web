@@ -12,7 +12,7 @@ import checkers.service.GameService;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
+import java.util.List;
 
 
 @RestController
@@ -63,7 +63,8 @@ public class GameController {
     
     
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-    public Map<String, GetGameResponse> getGames() {
-        return gameService.getGames();
+    public List<GetGameResponse> getGames(
+            @RequestParam(value = "statusOnly", required = false, defaultValue = "false") boolean statusOnly) {
+        return gameService.getGames(statusOnly);
     }
 }

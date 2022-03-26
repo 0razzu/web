@@ -5,12 +5,15 @@ import checkers.database.dao.GameDao;
 import checkers.database.util.ExodusGameMapper;
 import checkers.database.util.ExodusStore;
 import checkers.model.Game;
+import checkers.model.Status;
 import jetbrains.exodus.entitystore.Entity;
 import jetbrains.exodus.entitystore.EntityIterable;
 import jetbrains.exodus.entitystore.PersistentEntityStore;
 import org.springframework.stereotype.Repository;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -57,18 +60,47 @@ public class ExodusGameDao implements GameDao {
     
     
     @Override
-    public Map<String, Game> getAll() {
-        AtomicReference<Map<String, Game>> gamesRef = new AtomicReference<>();
+    public List<Game> getAll() {
+        AtomicReference<List<Game>> gamesRef = new AtomicReference<>();
         
         STORE.executeInReadonlyTransaction(txn -> {
             EntityIterable gameEntities = txn.getAll("Game");
-            Map<String, Game> games = new HashMap<>();
-            gameEntities.forEach(gameEntity ->
-                    games.put(gameEntity.toIdString(), ExodusGameMapper.fromEntity(gameEntity)));
+            List<Game> games = new ArrayList<>();
+            gameEntities.forEach(gameEntity -> games.add(ExodusGameMapper.fromEntity(gameEntity)));
             
             gamesRef.set(games);
         });
         
+        return gamesRef.get();
+    }
+    
+    
+    @Override
+    public List<Game> getAllStatusOnly() {
+        AtomicReference<List<Game>> gamesRef = new AtomicReference<>();
+    
+        STORE.executeInReadonlyTransaction(txn -> {
+            EntityIterable gameEntities = txn.getAll("Game");
+            List<Game> games = new ArrayList<>();
+            gameEntities.forEach(gameEntity ->
+                    games.add(
+                            new Game(
+                                    gameEntity.toIdString(),
+                                    null,
+                                    null,
+                                    Status.valueOf((String) gameEntity.getProperty("status")),
+                                    null,
+                                    null,
+                                    null,
+                                    null,
+                                    null
+                            )
+                    )
+            );
+        
+            gamesRef.set(games);
+        });
+    
         return gamesRef.get();
     }
 }

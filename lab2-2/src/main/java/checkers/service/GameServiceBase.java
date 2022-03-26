@@ -324,7 +324,7 @@ public class GameServiceBase {
         changedCells.add(startCell);
         changedCells.add(currentCell);
         
-        startCell.setChecker(game.isBecomeKing()?
+        startCell.setChecker(game.getBecomeKing()?
                 (game.getWhoseTurn() == Team.BLACK? Checker.BLACK : Checker.WHITE) :
                 currentCell.getChecker());
         currentCell.setChecker(null);

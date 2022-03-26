@@ -33,6 +33,9 @@ public class ToDtoMapper {
     
     
     public static List<SituationEntryDto> map(Multimap<Cell, PossibleMove> situation) {
+        if (situation == null)
+            return null;
+        
         List<SituationEntryDto> situationDto = new ArrayList<>();
         
         for (Map.Entry<Cell, Collection<PossibleMove>> entry: situation.asMap().entrySet()) {
@@ -81,6 +84,9 @@ public class ToDtoMapper {
     
     
     public static List<String> mapMoveListToStr(List<Move> moveList) {
+        if (moveList == null)
+            return null;
+        
         int moveListSize = moveList.size();
         List<String> moveListStr = new ArrayList<>(moveListSize / 2 + 1);
         
@@ -128,14 +134,16 @@ public class ToDtoMapper {
     
     
     public static List<FullCellDto> map(Cell[][] board) {
-        return Arrays.stream(board).map(row -> Arrays.stream(row).filter(Objects::nonNull).map(cell ->
-                new FullCellDto(
-                        cell.getRow(),
-                        cell.getCol(),
-                        cell.getState(),
-                        cell.getChecker()
-                )
-        ).collect(Collectors.toList())).collect(ArrayList::new, ArrayList::addAll, ArrayList::addAll);
+        return board == null?
+                null :
+                Arrays.stream(board).map(row -> Arrays.stream(row).filter(Objects::nonNull).map(cell ->
+                        new FullCellDto(
+                                cell.getRow(),
+                                cell.getCol(),
+                                cell.getState(),
+                                cell.getChecker()
+                        )
+                ).collect(Collectors.toList())).collect(ArrayList::new, ArrayList::addAll, ArrayList::addAll);
     }
     
     
@@ -148,15 +156,18 @@ public class ToDtoMapper {
     
     
     public static GetGameResponse map(Game game) {
+        List<Cell> killed = game.getKilled();
+        
         return new GetGameResponse(
+                game.getId(),
                 map(game.getBoard()),
                 game.getWhoseTurn(),
                 game.getStatus(),
                 map(game.getSituation()),
                 mapMoveListToStr(game.getMoveList()),
                 mapMoveToStr(game.getCurrentMove()),
-                game.getKilled().stream().map(ToDtoMapper::map).collect(Collectors.toList()),
-                game.isBecomeKing()
+                killed == null? null : killed.stream().map(ToDtoMapper::map).collect(Collectors.toList()),
+                game.getBecomeKing()
         );
     }
     

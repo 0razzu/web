@@ -160,23 +160,27 @@
                 </article>
 
                 <article class="game-history">
-                    <h3>Ходы</h3>
-                    <ol id="move-list">
-                    </ol>
+                    <h3 id="game-history-header">Ходы</h3>
+                    <div id="move-list-panel">
+                        <ol id="move-list"></ol>
+                    </div>
                     <div id="move-list-input-panel" class="removed">
                         <textarea id="move-list-input"></textarea>
                         <button id="show-turns">Показать</button>
                         <div id="error-field">
                         </div>
                     </div>
-                    <table id="game-list-table" class="removed">
-                        <tbody id="game-list">
-                            <tr>
-                                <th>ID</th>
-                                <th>Статус</th>
-                            </tr>
-                        </tbody>
-                    </table>
+                    <div id="game-list-panel" class="removed">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Статус</th>
+                                </tr>
+                            </thead>
+                            <tbody id="game-list"></tbody>
+                        </table>
+                    </div>
                 </article>
             </div>
         </main>

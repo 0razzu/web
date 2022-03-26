@@ -44,6 +44,10 @@ const STATUS = {
     RUNNING: 'RUNNING',
     OVER: 'OVER',
 }
+const STATUS_VIEW = {
+    [STATUS.RUNNING]: 'Продолжается',
+    [STATUS.OVER]: 'Завершена',
+}
 
 const statusStr = document.getElementById('status')
 const startButton = document.getElementById('start')
@@ -52,12 +56,14 @@ const inputTurnsButton = document.getElementById('input-turns')
 const showGameListButton = document.getElementById('show-game-list')
 const cancelTurnButton = document.getElementById('cancel-turn')
 const finishTurnButton = document.getElementById('finish-turn')
-const moveListView = document.getElementById('move-list')
+const gameHistoryHeader = document.getElementById('game-history-header')
+const moveListPanel = document.getElementById('move-list-panel')
+const moveList = document.getElementById('move-list')
 const moveListInputPanel = document.getElementById('move-list-input-panel')
 const moveListInput = document.getElementById('move-list-input')
 const showTurnsButton = document.getElementById('show-turns')
 const errorField = document.getElementById('error-field')
-const gameListTable = document.getElementById('game-list-table')
+const gameListPanel = document.getElementById('game-list-panel')
 const gameList = document.getElementById('game-list')
 
 
@@ -77,38 +83,42 @@ const buttonCaptionToggler = (button, captionTrue, captionFalse) => {
 
 
 class GameHistoryElem {
-    constructor(isVisible, setVisibility) {
+    constructor(isVisible, setVisibility, header) {
         this.isVisible = isVisible
         this.setVisibility = setVisibility
+        this.header = header
     }
 }
 
 
 const gameHistoryInteriorElems = {
-    [moveListView.id]: new GameHistoryElem(
+    [moveListPanel.id]: new GameHistoryElem(
         true,
-        isVisible => {
-            visibilityToggler(moveListView)(isVisible)
+        function (isVisible) {
+            visibilityToggler(moveListPanel)(isVisible)
             this.isVisible = isVisible
-        }
+        },
+        'Ходы',
     ),
     [moveListInputPanel.id]: new GameHistoryElem(
         false,
-        isVisible => {
+        function (isVisible) {
             visibilityToggler(moveListInputPanel)(isVisible)
             this.isVisible = isVisible
             buttonCaptionToggler(inputTurnsButton, 'Закрыть', 'Ввести ходы')(isVisible)
             moveListInput.value = ''
             clearErrorField()
-        }
+        },
+        'Ввод ходов',
     ),
-    [gameListTable.id]: new GameHistoryElem(
+    [gameListPanel.id]: new GameHistoryElem(
         false,
-        isVisible => {
-            visibilityToggler(gameListTable)(isVisible)
+        function (isVisible) {
+            visibilityToggler(gameListPanel)(isVisible)
             this.isVisible = isVisible
             buttonCaptionToggler(showGameListButton, 'Закрыть', 'Список игр')(isVisible)
-        }
+        },
+        'Список игр',
     ),
 }
 
@@ -135,8 +145,10 @@ const gameHistoryInterior = new class {
             this.gameHistoryInteriorElems[elemId].setVisibility(true)
             this.currentVisibleId = elemId
         }
+
+        gameHistoryHeader.innerText = gameHistoryInteriorElems[this.currentVisibleId].header
     }
-} (gameHistoryInteriorElems, moveListView)
+} (gameHistoryInteriorElems, moveListPanel)
 
 
 const isPlayCell = (row, col) => (row + col) % 2 === 0 && row >= 0 && row < BOARD_SIZE && col >= 0 && col < BOARD_SIZE
@@ -219,19 +231,19 @@ const renderButtons = () => {
 
 
 const renderMove = moveStr => {
-    const moveViews = moveListView.getElementsByTagName('li')
+    const moveViews = moveList.getElementsByTagName('li')
     let turnView = moveViews[moveViews.length - 1]
 
     if (!turnView || turnView.textContent.split(' ').length === 2) {
         turnView = document.createElement('li')
         turnView.appendChild(document.createTextNode(moveStr))
-        moveListView.appendChild(turnView)
+        moveList.appendChild(turnView)
     }
 
     else
         turnView.textContent += ' ' + moveStr
 
-    moveListView.scrollTop = moveListView.scrollHeight
+    moveList.scrollTop = moveList.scrollHeight
 }
 
 
@@ -240,15 +252,15 @@ const renderMoveListEntry = movePairStr => {
 
     const turnView = document.createElement('li')
     turnView.appendChild(document.createTextNode(movePairStrNoNum))
-    moveListView.appendChild(turnView)
+    moveList.appendChild(turnView)
 
-    moveListView.scrollTop = moveListView.scrollHeight
+    moveList.scrollTop = moveList.scrollHeight
 }
 
 
-const renderMoveList = moveList => {
-    moveListView.innerHTML = ''
-    moveList.forEach(line => renderMoveListEntry(line))
+const renderMoveList = moves => {
+    moveList.innerHTML = ''
+    moves.forEach(line => renderMoveListEntry(line))
 }
 
 
@@ -277,7 +289,7 @@ const togglePromptMode = cell => {
             dest.dest.state = CELL_STATE.DEFAULT
     }
 
-    else if (inPromptMode === null && (!inMove || (killed.length !== 0 && dests.length !== 0))) {
+    else if (inPromptMode === null && !inMove && dests.length !== 0) {
         inPromptMode = cell
         cell.state = CELL_STATE.PROMPT
 
@@ -352,7 +364,7 @@ const example1Arrangement = () => {
 }
 
 
-const resetEverything = () => {
+const resetEverything = (resetGameHistoryInterior = true) => {
     for (let row = 0; row < BOARD_SIZE; row++)
         for (let col = 0; col < BOARD_SIZE; col++)
             if (isPlayCell(row, col)) {
@@ -367,6 +379,9 @@ const resetEverything = () => {
     killed = []
     whoseTurn = null
     buttonsVisible = false
+
+    if (resetGameHistoryInterior)
+        gameHistoryInterior.toggleVisibility(moveListPanel)
 }
 
 
@@ -401,14 +416,41 @@ const arrangementButtonOnClick = arrangement => {
     resetEverything()
     arrangement()
     createGame().then(() => renderEverything())
-    moveListView.innerText = ''
+    moveList.innerText = ''
 }
 
 
 const inputTurnsButtonOnClick = () => gameHistoryInterior.toggleVisibility(moveListInputPanel)
 
 
-const showGameListButtonOnClick = () => gameHistoryInterior.toggleVisibility(gameListTable)
+const parseGameList = games => {
+    gameList.innerHTML = ''
+
+    games.forEach(({id: gameId, status: gameStatus}) => {
+        const idLink = document.createElement('a')
+        idLink.appendChild(document.createTextNode(gameId))
+        idLink.href = `${ROOT}/api/games/${gameId}`
+        const status = document.createTextNode(STATUS_VIEW[gameStatus])
+
+        const idLinkTd = document.createElement('td')
+        idLinkTd.appendChild(idLink)
+        const statusTd = document.createElement('td')
+        statusTd.appendChild(status)
+
+        const gameEntry = document.createElement('tr')
+        gameEntry.append(idLinkTd, statusTd)
+
+        gameList.appendChild(gameEntry)
+    })
+}
+
+
+
+const showGameListButtonOnClick = () => {
+    if (!gameHistoryInteriorElems[gameListPanel.id].isVisible)
+        getGames().then(games => parseGameList(games))
+    gameHistoryInterior.toggleVisibility(gameListPanel)
+}
 
 
 const cancelTurnButtonOnClick = () => {
@@ -451,7 +493,7 @@ const moveListViewOnCopy = event => {
 
 
 const showTurnsButtonOnClick = () => {
-    resetEverything()
+    resetEverything(false)
     startArrangement()
 
     parseTurns(moveListInput.value.split('\n').map(line => line.trim()).filter(line => line !== ''))
@@ -501,7 +543,7 @@ const init = () => {
     showGameListButton.addEventListener('click', () => showGameListButtonOnClick())
     cancelTurnButton.addEventListener('click', () => cancelTurnButtonOnClick())
     finishTurnButton.addEventListener('click', () => finishTurnButtonOnClick())
-    moveListView.addEventListener('copy', event => moveListViewOnCopy(event))
+    moveList.addEventListener('copy', event => moveListViewOnCopy(event))
     showTurnsButton.addEventListener('click', () => showTurnsButtonOnClick())
 }
 

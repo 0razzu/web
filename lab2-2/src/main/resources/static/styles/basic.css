@@ -272,9 +272,13 @@ textarea {
     margin-left: 6rem;
 }
 
-#move-list {
+#move-list-panel,
+#game-list-panel {
     overflow-y: auto;
     height: calc(100% - 5rem);
+}
+
+#move-list-panel {
     margin-left: -2.5rem;
 }
 
@@ -306,6 +310,11 @@ textarea {
 
 #error-field p:last-child {
     margin-bottom: 0;
+}
+
+#game-list-panel table {
+    width: 100%;
+    text-align: center;
 }
 
 footer {

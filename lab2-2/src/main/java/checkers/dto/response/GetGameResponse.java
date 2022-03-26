@@ -16,6 +16,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class GetGameResponse {
+    private String id;
     private List<FullCellDto> board;
     private Team whoseTurn;
     private Status status;
@@ -23,5 +24,5 @@ public class GetGameResponse {
     private List<String> moveList;
     private String currentMove;
     private List<CellDto> killed;
-    private boolean becomeKing;
+    private Boolean becomeKing;
 }

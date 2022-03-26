@@ -15,6 +15,14 @@ const post = (path, body) => {
 }
 
 
+const get = path => {
+    return fetch(ROOT + '/api/games' + path, {
+        method: 'GET',
+    })
+        .then(response => response.json())
+}
+
+
 const del = path => {
     return fetch(ROOT + '/api/games' + path, {
         method: 'DELETE',
@@ -143,4 +151,9 @@ const applyTurn = async () => {
                 lastMove
             }
         })
+}
+
+
+const getGames = async () => {
+    return get('?statusOnly=true')
 }

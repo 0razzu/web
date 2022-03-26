@@ -14,9 +14,8 @@ import checkers.error.CheckersException;
 import checkers.model.*;
 import org.springframework.stereotype.Service;
 
-import java.util.AbstractMap;
+import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import static checkers.controller.util.FromDtoMapper.map;
@@ -135,9 +134,9 @@ public class GameService extends GameServiceBase {
     }
     
     
-    public Map<String, GetGameResponse> getGames() {
-        return gameDao.getAll().entrySet().stream()
-                .map(entry -> new AbstractMap.SimpleEntry<>(entry.getKey(), ToDtoMapper.map(entry.getValue())))
-                .collect(Collectors.toMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue));
+    public List<GetGameResponse> getGames(boolean statusOnly) {
+        List<Game> games = statusOnly? gameDao.getAllStatusOnly() : gameDao.getAll();
+        
+        return games.stream().map(ToDtoMapper::map).collect(Collectors.toList());
     }
 }

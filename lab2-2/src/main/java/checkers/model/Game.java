@@ -14,6 +14,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Game {
+    private String id;
     private Cell[][] board;
     private Team whoseTurn;
     private Status status;
@@ -21,7 +22,7 @@ public class Game {
     private List<Move> moveList;
     private Move currentMove;
     private List<Cell> killed;
-    private boolean becomeKing;
+    private Boolean becomeKing;
     
     
     public Game(Cell[][] board, Team whoseTurn, Status status) {
@@ -30,5 +31,6 @@ public class Game {
         this.status = status;
         moveList = new ArrayList<>();
         killed = new ArrayList<>();
+        becomeKing = false;
     }
 }
