@@ -1,11 +1,9 @@
 package checkers.controller.back;
 
 
+import checkers.dto.request.ChangeStatusRequest;
 import checkers.dto.request.CreateGameRequest;
-import checkers.dto.response.ApplyCurrentMoveResponse;
-import checkers.dto.response.CreateGameResponse;
-import checkers.dto.response.EditCurrentMoveResponse;
-import checkers.dto.response.GetGameResponse;
+import checkers.dto.response.*;
 import checkers.dto.versatile.StepDto;
 import checkers.error.CheckersException;
 import checkers.service.GameService;
@@ -33,6 +31,14 @@ public class GameController {
         
         else
             return gameService.createGameFromMoveList(request);
+    }
+    
+    
+    @PutMapping(path = "/{id}/status",
+            consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public SurrenderResponse surrender(@PathVariable("id") String gameId, @RequestBody ChangeStatusRequest request)
+            throws CheckersException {
+        return gameService.surrender(gameId, request);
     }
     
     

@@ -1,5 +1,5 @@
-const post = (path, body) => {
-    let params = {method: 'POST'}
+const postOrPut = (method, path, body) => {
+    let params = {method}
 
     if (body)
         params = {
@@ -13,6 +13,12 @@ const post = (path, body) => {
     return fetch(ROOT + '/api/games' + path, params)
         .then(response => response.json())
 }
+
+
+const post = (path, body) => postOrPut('POST', path, body)
+
+
+const put = (path, body) => postOrPut('PUT', path, body)
 
 
 const get = path => {
@@ -150,6 +156,21 @@ const applyTurn = async () => {
                 changedCells: mapToCellList(changedCells),
                 lastMove
             }
+        })
+}
+
+
+const surrender = async () => {
+    return put(
+        `/${GAME_ID}/status`,
+        JSON.stringify({status: STATUS.OVER})
+    )
+        .then(({changedCells, situation, status, whoseTurn: turn}) => {
+            mapToSituation(situation)
+            currentStatus = status
+            whoseTurn = turn
+
+            return mapToCellList(changedCells)
         })
 }
 

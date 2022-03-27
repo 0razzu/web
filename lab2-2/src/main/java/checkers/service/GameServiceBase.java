@@ -9,6 +9,7 @@ import com.google.common.collect.Multimap;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 import java.util.stream.Collectors;
 
 import static checkers.controller.util.GameUtil.*;
@@ -113,6 +114,10 @@ public class GameServiceBase {
     protected void calculateSituation(Game game) {
         Multimap<Cell, PossibleMove> situation = ArrayListMultimap.create();
         game.setSituation(situation);
+        
+        if (game.getStatus() == Status.OVER)
+            return;
+    
         boolean foundMustBeFilled = false;
         
         for (int row = 0; row < BOARD_SIZE; row++)
@@ -188,6 +193,20 @@ public class GameServiceBase {
             targetCell.setState(CellState.DEFAULT);
             changedCells.add(targetCell);
         }
+        
+        return changedCells;
+    }
+    
+    
+    protected void toggleWhoseTurn(Game game) {
+        game.setWhoseTurn(game.getWhoseTurn() == Team.WHITE? Team.BLACK : Team.WHITE);
+    }
+    
+    
+    protected List<Cell> surrender(Game game) {
+        game.setStatus(Status.OVER);
+        List<Cell> changedCells = cancelCurrentMove(game);
+        toggleWhoseTurn(game);
         
         return changedCells;
     }
@@ -306,7 +325,7 @@ public class GameServiceBase {
         }
         
         else {
-            game.setWhoseTurn(game.getWhoseTurn() == Team.WHITE? Team.BLACK : Team.WHITE);
+            toggleWhoseTurn(game);
             calculateSituation(game);
         }
         

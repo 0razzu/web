@@ -8,5 +8,6 @@ public enum CheckersErrorCode {
     WRONG_CELL_STATE,
     HAVE_KILLED_MISMATCH,
     PARSING_ERROR,
+    INCORRECT_STATUS,
     UNKNOWN_ERROR,
 }

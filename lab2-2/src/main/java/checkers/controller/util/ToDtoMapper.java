@@ -125,6 +125,17 @@ public class ToDtoMapper {
     }
     
     
+    public static SurrenderResponse map(List<Cell> changedCells, Multimap<Cell, PossibleMove> situation,
+                                        Status status, Team whoseTurn) {
+        return new SurrenderResponse(
+                map(changedCells),
+                map(situation),
+                status,
+                whoseTurn
+        );
+    }
+    
+    
     public static EditCurrentMoveResponse map(List<Cell> changedCells, Multimap<Cell, PossibleMove> situation) {
         return new EditCurrentMoveResponse(
                 map(changedCells),

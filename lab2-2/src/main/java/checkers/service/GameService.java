@@ -4,21 +4,21 @@ package checkers.service;
 import checkers.controller.util.FromDtoMapper;
 import checkers.controller.util.ToDtoMapper;
 import checkers.database.dao.GameDao;
+import checkers.dto.request.ChangeStatusRequest;
 import checkers.dto.request.CreateGameRequest;
-import checkers.dto.response.ApplyCurrentMoveResponse;
-import checkers.dto.response.CreateGameResponse;
-import checkers.dto.response.EditCurrentMoveResponse;
-import checkers.dto.response.GetGameResponse;
+import checkers.dto.response.*;
 import checkers.dto.versatile.StepDto;
 import checkers.error.CheckersException;
 import checkers.model.*;
+import com.google.common.collect.ArrayListMultimap;
 import org.springframework.stereotype.Service;
 
-import java.util.Comparator;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import static checkers.controller.util.FromDtoMapper.map;
+import static checkers.error.CheckersErrorCode.INCORRECT_STATUS;
 import static checkers.error.CheckersErrorCode.PARSING_ERROR;
 
 
@@ -73,6 +73,26 @@ public class GameService extends GameServiceBase {
                 game.getStatus(),
                 game.getSituation(),
                 game.getMoveList()
+        );
+    }
+    
+    
+    public SurrenderResponse surrender(String gameId, ChangeStatusRequest request) throws CheckersException {
+        Status status = request.getStatus();
+        
+        if (status != Status.OVER)
+            throw new CheckersException(INCORRECT_STATUS, String.valueOf(status));
+    
+        Game game = gameDao.get(gameId);
+        List<Cell> changedCells = surrender(game);
+        
+        gameDao.update(gameId, game);
+        
+        return ToDtoMapper.map(
+                changedCells,
+                game.getSituation(),
+                game.getStatus(),
+                game.getWhoseTurn()
         );
     }
     

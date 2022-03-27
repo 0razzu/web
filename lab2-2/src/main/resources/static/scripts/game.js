@@ -53,6 +53,7 @@ const startButton = document.getElementById('start')
 const example1button = document.getElementById('example1')
 const inputTurnsButton = document.getElementById('input-turns')
 const showGameListButton = document.getElementById('show-game-list')
+const surrenderButton = document.getElementById('surrender')
 const cancelTurnButton = document.getElementById('cancel-turn')
 const finishTurnButton = document.getElementById('finish-turn')
 const gameHistoryHeader = document.getElementById('game-history-header')
@@ -216,15 +217,26 @@ const renderStatus = () => {
 }
 
 
+const hideButton = button => button.classList.add('hidden')
+
+
+const showButton = button => button.classList.remove('hidden')
+
+
 const renderButtons = () => {
+    if (GAME_ID && currentStatus !== STATUS.OVER)
+        showButton(surrenderButton)
+    else
+        hideButton(surrenderButton)
+
     if (inMove) {
-        cancelTurnButton.classList.remove('hidden')
-        finishTurnButton.classList.remove('hidden')
+        showButton(cancelTurnButton)
+        showButton(finishTurnButton)
     }
 
     else {
-        cancelTurnButton.classList.add('hidden')
-        finishTurnButton.classList.add('hidden')
+        hideButton(cancelTurnButton)
+        hideButton(finishTurnButton)
     }
 }
 
@@ -462,6 +474,17 @@ const showGameListButtonOnClick = () => {
 }
 
 
+const surrenderButtonOnClick = () => {
+    surrender()
+        .then(changedCells => {
+            changedCells.forEach(cell => renderCell(cell.row, cell.col))
+            inMove = false
+            renderButtons()
+            renderStatus()
+        })
+}
+
+
 const cancelTurnButtonOnClick = () => {
     if (!inMove && inPromptMode === null)
         return
@@ -548,6 +571,7 @@ const init = () => {
     example1button.addEventListener('click', () => arrangementButtonOnClick(example1Arrangement))
     inputTurnsButton.addEventListener('click', () => inputTurnsButtonOnClick())
     showGameListButton.addEventListener('click', () => showGameListButtonOnClick())
+    surrenderButton.addEventListener('click', () => surrenderButtonOnClick())
     cancelTurnButton.addEventListener('click', () => cancelTurnButtonOnClick())
     finishTurnButton.addEventListener('click', () => finishTurnButtonOnClick())
     moveList.addEventListener('copy', event => moveListViewOnCopy(event))
