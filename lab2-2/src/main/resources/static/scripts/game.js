@@ -5,8 +5,6 @@ let SITUATION = new Map()
 let GAME_ID
 let inPromptMode = null
 let inMove = false
-let becomeKing = false
-let killed = []
 let whoseTurn = null
 let currentStatus = null
 
@@ -48,6 +46,7 @@ const STATUS_VIEW = {
     [STATUS.OVER]: 'Завершена',
 }
 
+const gameHeader = document.getElementById('game-header')
 const statusStr = document.getElementById('status')
 const startButton = document.getElementById('start')
 const example1button = document.getElementById('example1')
@@ -155,6 +154,11 @@ const isPlayCell = (row, col) => (row + col) % 2 === 0 && row >= 0 && row < BOAR
 
 
 const hasChecker = (row, col) => BOARD[row][col]?.checker != null
+
+
+const renderGameHeader = () => {
+    gameHeader.innerText = 'Игра' + (GAME_ID? ` ${GAME_ID}` : '')
+}
 
 
 const renderChecker = (row, col) => {
@@ -385,9 +389,9 @@ const resetEverything = (resetGameHistoryInterior = true) => {
     SITUATION.clear()
     inPromptMode = null
     inMove = false
-    becomeKing = false
-    killed = []
     whoseTurn = null
+
+    renderEverything()
 
     if (resetGameHistoryInterior)
         gameHistoryInterior.toggleVisibility(moveListPanel)
@@ -395,6 +399,7 @@ const resetEverything = (resetGameHistoryInterior = true) => {
 
 
 const renderEverything = () => {
+    renderGameHeader()
     renderBoard()
     renderStatus()
     renderButtons()

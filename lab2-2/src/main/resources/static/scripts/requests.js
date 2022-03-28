@@ -40,7 +40,7 @@ const del = path => {
 const mapToSituation = situationDto => {
     SITUATION.clear()
 
-    situationDto.forEach(({from, moves}) =>
+    situationDto?.forEach(({from, moves}) =>
         SITUATION.set(
             BOARD[from.row][from.col],
             moves.map(move => ({
