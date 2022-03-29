@@ -11,10 +11,9 @@ import jetbrains.exodus.entitystore.EntityIterable;
 import jetbrains.exodus.entitystore.PersistentEntityStore;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 
@@ -93,7 +92,8 @@ public class ExodusGameDao implements GameDao {
                                     null,
                                     null,
                                     null,
-                                    null
+                                    null,
+                                    LocalDateTime.parse((String) gameEntity.getProperty("moveStartTime"))
                             )
                     )
             );

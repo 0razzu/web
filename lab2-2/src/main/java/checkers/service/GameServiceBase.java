@@ -1,15 +1,17 @@
 package checkers.service;
 
 
+import checkers.Properties;
 import checkers.error.CheckersException;
 import checkers.model.*;
 import checkers.service.util.BoardIterator;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Stack;
 import java.util.stream.Collectors;
 
 import static checkers.controller.util.GameUtil.*;
@@ -17,6 +19,14 @@ import static checkers.error.CheckersErrorCode.*;
 
 
 public class GameServiceBase {
+    private final Properties properties;
+    
+    
+    public GameServiceBase(Properties properties) {
+        this.properties = properties;
+    }
+    
+    
     protected boolean updateSituation(Game game, int row, int col, boolean foundMustBeFilled) {
         if (!isTurnOf(row, col, game))
             return foundMustBeFilled;
@@ -117,7 +127,7 @@ public class GameServiceBase {
         
         if (game.getStatus() == Status.OVER)
             return;
-    
+        
         boolean foundMustBeFilled = false;
         
         for (int row = 0; row < BOARD_SIZE; row++)
@@ -160,7 +170,7 @@ public class GameServiceBase {
             status = Status.RUNNING;
         }
         
-        Game game = new Game(board, team, status);
+        Game game = new Game(board, team, status, LocalDateTime.now());
         
         calculateSituation(game);
         
@@ -212,6 +222,16 @@ public class GameServiceBase {
     }
     
     
+    protected List<Cell> surrenderIfTimeIsUp(Game game) {
+        if (game.getStatus() == Status.RUNNING
+                && Duration.between(game.getMoveStartTime(), LocalDateTime.now()).toSeconds() >= properties.getMoveTime())
+            return surrender(game);
+        
+        else
+            return new ArrayList<>();
+    }
+    
+    
     protected void makeKingIfNeeded(Cell cell, Game game) {
         Team whoseTurn = game.getWhoseTurn();
         int row = cell.getRow();
@@ -246,6 +266,10 @@ public class GameServiceBase {
             throw new CheckersException(NO_SUCH_CELL, step.toString());
         
         List<Cell> changedCells = new ArrayList<>();
+        
+        if (game.getStatus() == Status.OVER)
+            return changedCells;
+        
         Cell from = step.getFrom();
         Cell to = step.getTo();
         CellState toState = to.getState();
@@ -305,6 +329,11 @@ public class GameServiceBase {
     
     
     protected List<Cell> applyCurrentMove(Game game) {
+        List<Cell> changedCells = new ArrayList<>();
+        
+        if (game.getStatus() == Status.OVER)
+            return changedCells;
+        
         Cell[][] board = game.getBoard();
         List<Cell> killed = game.getKilled();
         
@@ -313,7 +342,7 @@ public class GameServiceBase {
             cell.setState(CellState.DEFAULT);
         }
         
-        List<Cell> changedCells = new ArrayList<>(killed);
+        changedCells.addAll(killed);
         killed.clear();
         game.getMoveList().add(game.getCurrentMove());
         game.setCurrentMove(null);
@@ -329,27 +358,37 @@ public class GameServiceBase {
             calculateSituation(game);
         }
         
+        game.setMoveStartTime(LocalDateTime.now());
+        
         return changedCells;
     }
     
     
     protected List<Cell> cancelCurrentMove(Game game) {
-        List<Step> currentMoveSteps = game.getCurrentMove().getSteps();
+        Move currentMove = game.getCurrentMove();
+        
+        if (currentMove == null)
+            return new ArrayList<>();
+        
+        List<Step> currentMoveSteps = currentMove.getSteps();
         Cell startCell = currentMoveSteps.get(0).getFrom();
         Cell currentCell = currentMoveSteps.get(currentMoveSteps.size() - 1).getTo();
         List<Cell> killed = game.getKilled();
         
         List<Cell> changedCells = new ArrayList<>(killed);
-        changedCells.add(startCell);
+        killed.clear();
+        changedCells.addAll(currentMoveSteps.stream().map(Step::getFrom).collect(Collectors.toList()));
         changedCells.add(currentCell);
+        
+        changedCells.addAll(game.getSituation().get(currentCell).stream()
+                .map(PossibleMove::getDest).collect(Collectors.toList()));
         
         startCell.setChecker(game.getBecomeKing()?
                 (game.getWhoseTurn() == Team.BLACK? Checker.BLACK : Checker.WHITE) :
                 currentCell.getChecker());
         currentCell.setChecker(null);
         game.setCurrentMove(null);
-        killed.forEach(cell -> cell.setState(CellState.DEFAULT));
-        killed.clear();
+        changedCells.forEach(cell -> cell.setState(CellState.DEFAULT));
         game.setBecomeKing(false);
         calculateSituation(game);
         

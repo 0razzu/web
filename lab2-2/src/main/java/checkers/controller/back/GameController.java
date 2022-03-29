@@ -36,7 +36,7 @@ public class GameController {
     
     @PutMapping(path = "/{id}/status",
             consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public SurrenderResponse surrender(@PathVariable("id") String gameId, @RequestBody ChangeStatusRequest request)
+    public EditStateResponse surrender(@PathVariable("id") String gameId, @RequestBody ChangeStatusRequest request)
             throws CheckersException {
         return gameService.surrender(gameId, request);
     }
@@ -44,7 +44,7 @@ public class GameController {
     
     @PostMapping(path = "/{id}/currentMove/steps",
             consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public EditCurrentMoveResponse makeStep(@PathVariable("id") String gameId, @RequestBody StepDto request)
+    public EditStateResponse makeStep(@PathVariable("id") String gameId, @RequestBody StepDto request)
             throws CheckersException {
         return gameService.makeStep(gameId, request);
     }
@@ -57,7 +57,7 @@ public class GameController {
     
     
     @DeleteMapping(path = "/{id}/currentMove")
-    public EditCurrentMoveResponse cancelCurrentMove(@PathVariable("id") String gameId) {
+    public EditStateResponse cancelCurrentMove(@PathVariable("id") String gameId) {
         return gameService.cancelCurrentMove(gameId);
     }
     

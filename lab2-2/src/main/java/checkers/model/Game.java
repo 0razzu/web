@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,14 +24,16 @@ public class Game {
     private Move currentMove;
     private List<Cell> killed;
     private Boolean becomeKing;
+    private LocalDateTime moveStartTime;
     
     
-    public Game(Cell[][] board, Team whoseTurn, Status status) {
+    public Game(Cell[][] board, Team whoseTurn, Status status, LocalDateTime moveStartTime) {
         this.board = board;
         this.whoseTurn = whoseTurn;
         this.status = status;
         moveList = new ArrayList<>();
         killed = new ArrayList<>();
         becomeKing = false;
+        this.moveStartTime = moveStartTime;
     }
 }

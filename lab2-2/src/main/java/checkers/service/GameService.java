@@ -1,6 +1,7 @@
 package checkers.service;
 
 
+import checkers.Properties;
 import checkers.controller.util.FromDtoMapper;
 import checkers.controller.util.ToDtoMapper;
 import checkers.database.dao.GameDao;
@@ -10,10 +11,8 @@ import checkers.dto.response.*;
 import checkers.dto.versatile.StepDto;
 import checkers.error.CheckersException;
 import checkers.model.*;
-import com.google.common.collect.ArrayListMultimap;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -27,7 +26,8 @@ public class GameService extends GameServiceBase {
     private final GameDao gameDao;
     
     
-    public GameService(GameDao gameDao) {
+    public GameService(GameDao gameDao, Properties properties) {
+        super(properties);
         this.gameDao = gameDao;
     }
     
@@ -77,12 +77,12 @@ public class GameService extends GameServiceBase {
     }
     
     
-    public SurrenderResponse surrender(String gameId, ChangeStatusRequest request) throws CheckersException {
+    public EditStateResponse surrender(String gameId, ChangeStatusRequest request) throws CheckersException {
         Status status = request.getStatus();
         
         if (status != Status.OVER)
             throw new CheckersException(INCORRECT_STATUS, String.valueOf(status));
-    
+        
         Game game = gameDao.get(gameId);
         List<Cell> changedCells = surrender(game);
         
@@ -97,7 +97,7 @@ public class GameService extends GameServiceBase {
     }
     
     
-    public EditCurrentMoveResponse makeStep(String gameId, StepDto request) throws CheckersException {
+    public EditStateResponse makeStep(String gameId, StepDto request) throws CheckersException {
         Game game = gameDao.get(gameId);
         Cell[][] board = game.getBoard();
         Step step = map(request, board);
@@ -106,24 +106,36 @@ public class GameService extends GameServiceBase {
         if (from.getState() != CellState.PROMPT)
             togglePromptMode(from, game); // as enter-prompt-mode clicks are not sent to the server
         
-        List<Cell> changedCells = makeStep(step, game);
+        List<Cell> changedCells = surrenderIfTimeIsUp(game);
         
-        gameDao.update(gameId, game);
+        if (game.getStatus() == Status.RUNNING) {
+            changedCells.addAll(makeStep(step, game));
+            
+            gameDao.update(gameId, game);
+        }
         
         return ToDtoMapper.map(
                 changedCells,
-                game.getSituation()
+                game.getSituation(),
+                game.getStatus(),
+                game.getWhoseTurn()
         );
     }
     
     
     public ApplyCurrentMoveResponse applyCurrentMove(String gameId) {
         Game game = gameDao.get(gameId);
-        Move currentMove = game.getCurrentMove();
+        List<Cell> changedCells = surrenderIfTimeIsUp(game);
         
-        List<Cell> changedCells = applyCurrentMove(game);
+        Move currentMove = null;
         
-        gameDao.update(gameId, game);
+        if (game.getStatus() == Status.RUNNING) {
+            currentMove = game.getCurrentMove();
+            
+            changedCells.addAll(applyCurrentMove(game));
+            
+            gameDao.update(gameId, game);
+        }
         
         return ToDtoMapper.map(
                 changedCells,
@@ -135,27 +147,54 @@ public class GameService extends GameServiceBase {
     }
     
     
-    public EditCurrentMoveResponse cancelCurrentMove(String gameId) {
+    public EditStateResponse cancelCurrentMove(String gameId) {
         Game game = gameDao.get(gameId);
         
-        List<Cell> changedCells = cancelCurrentMove(game);
+        List<Cell> changedCells = surrenderIfTimeIsUp(game);
         
-        gameDao.update(gameId, game);
+        if (game.getStatus() == Status.RUNNING) {
+            changedCells.addAll(cancelCurrentMove(game));
+            
+            gameDao.update(gameId, game);
+        }
         
         return ToDtoMapper.map(
                 changedCells,
-                game.getSituation()
+                game.getSituation(),
+                game.getStatus(),
+                game.getWhoseTurn()
         );
     }
     
     
+    private void updateGameStatus(Game game) {
+        if (game.getStatus() == Status.RUNNING) {
+            surrenderIfTimeIsUp(game);
+            
+            if (game.getStatus() == Status.OVER)
+                gameDao.update(game.getId(), game);
+        }
+    }
+    
+    
     public GetGameResponse getGame(String id) {
-        return ToDtoMapper.map(gameDao.get(id));
+        Game game = gameDao.get(id);
+        
+        updateGameStatus(game);
+        
+        return ToDtoMapper.map(game);
     }
     
     
     public List<GetGameResponse> getGames(boolean statusOnly) {
-        List<Game> games = statusOnly? gameDao.getAllStatusOnly() : gameDao.getAll();
+        List<Game> games = gameDao.getAll();
+        
+        games.forEach(this::updateGameStatus);
+        
+        if (statusOnly)
+            games = games.stream()
+                    .map(game -> new Game(game.getId(), null, null, game.getStatus(), null, null, null, null, null, null))
+                    .collect(Collectors.toList());
         
         return games.stream().map(ToDtoMapper::map).collect(Collectors.toList());
     }

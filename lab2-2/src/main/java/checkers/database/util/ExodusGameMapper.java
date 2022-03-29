@@ -10,6 +10,8 @@ import com.google.gson.reflect.TypeToken;
 import jetbrains.exodus.entitystore.Entity;
 
 import java.lang.reflect.Type;
+import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -193,6 +195,7 @@ public class ExodusGameMapper {
         entity.setProperty("currentMove", toString(game.getCurrentMove()));
         entity.setProperty("killed", cellListToString(game.getKilled()));
         entity.setProperty("becomeKing", game.getBecomeKing());
+        entity.setProperty("moveStartTime", game.getMoveStartTime().toString());
     }
     
     
@@ -208,7 +211,8 @@ public class ExodusGameMapper {
                 toMoveList((String) entity.getProperty("moveList"), board),
                 toMove((String) entity.getProperty("currentMove"), board),
                 toCellList((String) entity.getProperty("killed"), board),
-                (boolean) entity.getProperty("becomeKing")
+                (boolean) entity.getProperty("becomeKing"),
+                LocalDateTime.parse((String) entity.getProperty("moveStartTime"))
         );
     }
 }

@@ -343,6 +343,7 @@ const cellOnClick = (row, col) => {
             .then(changedCells => {
                 changedCells.forEach(cell => renderCell(cell.row, cell.col))
                 renderButtons()
+                renderStatus()
             })
 }
 
@@ -500,6 +501,7 @@ const cancelTurnButtonOnClick = () => {
             inMove = false
             inPromptMode = null
             renderButtons()
+            renderStatus()
         })
 }
 
@@ -515,7 +517,9 @@ const finishTurnButtonOnClick = () => {
             inPromptMode = null
             renderStatus()
             renderButtons()
-            renderMove(lastMove)
+
+            if (lastMove)
+                renderMove(lastMove)
         })
 }
 

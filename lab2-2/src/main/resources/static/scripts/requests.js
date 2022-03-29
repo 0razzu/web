@@ -127,8 +127,10 @@ const makeStep = async ({from, to}) => {
             to: {row: to.row, col: to.col},
         })
     )
-        .then(({changedCells, situation}) => {
+        .then(({changedCells, situation, status, whoseTurn: turn}) => {
             mapToSituation(situation)
+            currentStatus = status
+            whoseTurn = turn
 
             return mapToCellList(changedCells)
         })
@@ -137,8 +139,10 @@ const makeStep = async ({from, to}) => {
 
 const cancelTurn = async () => {
     return del(`/${GAME_ID}/currentMove`)
-        .then(({changedCells, situation}) => {
+        .then(({changedCells, situation, status, whoseTurn: turn}) => {
             mapToSituation(situation)
+            currentStatus = status
+            whoseTurn = turn
 
             return mapToCellList(changedCells)
         })

@@ -14,7 +14,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class SurrenderResponse {
+public class EditStateResponse {
     private List<FullCellDto> changedCells;
     private List<SituationEntryDto> situation;
     private Status status;
