@@ -3,14 +3,12 @@ package checkers;
 
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.PropertySource;
-import org.springframework.stereotype.Component;
+import org.springframework.context.annotation.Configuration;
 
 
-@Component
-@PropertySource("classpath:application.yml")
+@Configuration
 @Getter
 public class Properties {
-    @Value("${game.move-time}")
+    @Value("#{${moveTime}?: 120}")
     private int moveTime;
 }

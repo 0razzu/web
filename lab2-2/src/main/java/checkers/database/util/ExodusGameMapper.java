@@ -7,10 +7,10 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import jetbrains.exodus.core.dataStructures.Pair;
 import jetbrains.exodus.entitystore.Entity;
 
 import java.lang.reflect.Type;
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -81,7 +81,7 @@ public class ExodusGameMapper {
                 NULL :
                 GSON.toJson(
                 situation.asMap().entrySet().stream().map(entry ->
-                        Map.entry(
+                        new Pair<>(
                                 toString(entry.getKey()),
                                 entry.getValue().stream()
                                         .map(ExodusGameMapper::toString).collect(Collectors.toList())
@@ -95,14 +95,14 @@ public class ExodusGameMapper {
         if (strIsNull(str))
             return null;
         
-        List<Map.Entry<String, List<String>>> entries =
-                GSON.fromJson(str, new TypeToken<List<AbstractMap.SimpleEntry<String, List<String>>>>(){}.getType());
+        List<Pair<String, List<String>>> entries =
+                GSON.fromJson(str, new TypeToken<List<Pair<String, List<String>>>>(){}.getType());
         Multimap<Cell, PossibleMove> situation = ArrayListMultimap.create();
         
-        for (Map.Entry<String, List<String>> entry: entries) {
+        for (Pair<String, List<String>> entry: entries) {
             situation.putAll(
-                    toCell(entry.getKey(), board),
-                    entry.getValue().stream()
+                    toCell(entry.getFirst(), board),
+                    entry.getSecond().stream()
                             .map(possibleMoveStr -> toPossibleMove(possibleMoveStr, board)).collect(Collectors.toList())
             );
         }

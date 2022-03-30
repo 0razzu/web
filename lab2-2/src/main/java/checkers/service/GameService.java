@@ -11,6 +11,8 @@ import checkers.dto.response.*;
 import checkers.dto.versatile.StepDto;
 import checkers.error.CheckersException;
 import checkers.model.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -23,6 +25,7 @@ import static checkers.error.CheckersErrorCode.PARSING_ERROR;
 
 @Service
 public class GameService extends GameServiceBase {
+    private final Logger LOGGER = LoggerFactory.getLogger(GameService.class);
     private final GameDao gameDao;
     
     
@@ -130,11 +133,14 @@ public class GameService extends GameServiceBase {
         Move currentMove = null;
         
         if (game.getStatus() == Status.RUNNING) {
+            Team whoseTurn = game.getWhoseTurn();
             currentMove = game.getCurrentMove();
             
             changedCells.addAll(applyCurrentMove(game));
             
             gameDao.update(gameId, game);
+            
+            LOGGER.info("Game {}: {} made a move: {}", game.getId(), whoseTurn, ToDtoMapper.mapMoveToStr(currentMove));
         }
         
         return ToDtoMapper.map(
