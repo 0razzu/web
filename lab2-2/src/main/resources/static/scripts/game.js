@@ -81,6 +81,68 @@ const buttonCaptionToggler = (button, captionTrue, captionFalse) => {
 }
 
 
+const clearErrorField = () => {
+    if (!errorField.classList.contains('removed'))
+        errorField.classList.add('removed')
+    errorField.innerHTML = ''
+}
+
+
+const writeToErrorField = (...lines) => {
+    if (lines.length !== 0) {
+        errorField.innerHTML = ''
+        lines.forEach(line => {
+            const par = document.createElement('p')
+            par.appendChild(document.createTextNode(line))
+            errorField.appendChild(par)
+        })
+        errorField.classList.remove('removed')
+    }
+}
+
+
+const defaultErrorHandler = e => {
+    console.dir(e)
+
+    const {errorCode, reason, message} = e
+
+    if (message === 'Load failed')
+        writeToErrorField('Ошибка соединения')
+
+    else
+        switch (errorCode) {
+            case 'NO_SUCH_CELL': {
+                writeToErrorField('Нет такой клетки')
+                break
+            }
+            case 'OTHER_TEAMS_TURN': {
+                writeToErrorField('Сейчас ход другой команды')
+                break
+            }
+            case 'IMPOSSIBLE_STEP': {
+                writeToErrorField('Невозможный ход')
+                break
+            }
+            case 'PARSING_ERROR': {
+                writeToErrorField('Не\xa0удалось прочитать партию. Строка с\xa0ошибкой:', reason)
+                break
+            }
+            case 'GAME_OVER': {
+                writeToErrorField('Игра окончена')
+                break
+            }
+            case undefined: {
+                writeToErrorField('Неизвестная ошибка')
+                break
+            }
+            default: {
+                writeToErrorField("Не\xa0удалось выполнить действие. Код ошибки:", errorCode)
+                break
+            }
+    }
+}
+
+
 class GameHistoryElem {
     constructor(isVisible, setVisibility, header) {
         this.isVisible = isVisible
@@ -96,6 +158,7 @@ const gameHistoryInteriorElems = {
         function (isVisible) {
             visibilityToggler(moveListPanel)(isVisible)
             this.isVisible = isVisible
+            clearErrorField()
         },
         'Ходы',
     ),
@@ -116,6 +179,7 @@ const gameHistoryInteriorElems = {
             visibilityToggler(gameListPanel)(isVisible)
             this.isVisible = isVisible
             buttonCaptionToggler(showGameListButton, 'Закрыть', 'Список игр')(isVisible)
+            clearErrorField()
         },
         'Список игр',
     ),
@@ -345,6 +409,7 @@ const cellOnClick = (row, col) => {
                 renderButtons()
                 renderStatus()
             })
+            .catch(e => defaultErrorHandler(e))
 }
 
 
@@ -407,30 +472,12 @@ const renderEverything = () => {
 }
 
 
-const clearErrorField = () => {
-    if (!errorField.classList.contains('removed'))
-        errorField.classList.add('removed')
-    errorField.innerHTML = ''
-}
-
-
-const writeToErrorField = (...lines) => {
-    if (lines.length !== 0) {
-        errorField.innerHTML = ''
-        lines.forEach(line => {
-            const par = document.createElement('p')
-            par.appendChild(document.createTextNode(line))
-            errorField.appendChild(par)
-        })
-        errorField.classList.remove('removed')
-    }
-}
-
-
 const arrangementButtonOnClick = arrangement => {
     resetEverything()
     arrangement()
-    createGame().then(() => renderEverything())
+    createGame()
+        .then(() => renderEverything())
+        .catch(e => defaultErrorHandler(e))
     moveList.innerText = ''
 }
 
@@ -446,6 +493,7 @@ const idLinkOnClick = id => {
             renderEverything()
             renderMoveList(moveList)
         })
+        .catch(e => defaultErrorHandler(e))
 }
 
 
@@ -475,7 +523,9 @@ const parseGameList = games => {
 
 const showGameListButtonOnClick = () => {
     if (!gameHistoryInteriorElems[gameListPanel.id].isVisible)
-        getGames().then(games => parseGameList(games))
+        getGames()
+            .then(games => parseGameList(games))
+            .catch(e => defaultErrorHandler(e))
     gameHistoryInterior.toggleVisibility(gameListPanel)
 }
 
@@ -488,6 +538,7 @@ const surrenderButtonOnClick = () => {
             renderButtons()
             renderStatus()
         })
+        .catch(e => defaultErrorHandler(e))
 }
 
 
@@ -503,6 +554,7 @@ const cancelTurnButtonOnClick = () => {
             renderButtons()
             renderStatus()
         })
+        .catch(e => defaultErrorHandler(e))
 }
 
 
@@ -521,6 +573,7 @@ const finishTurnButtonOnClick = () => {
             if (lastMove)
                 renderMove(lastMove)
         })
+        .catch(e => defaultErrorHandler(e))
 }
 
 
@@ -542,10 +595,9 @@ const showTurnsButtonOnClick = () => {
             renderEverything()
             renderMoveList(moveList)
         })
-        .catch(({errorCode, reason}) => {
-            console.dir({errorCode, reason})
+        .catch(e => {
+            defaultErrorHandler(e)
 
-            writeToErrorField('Не\xa0удалось прочитать партию. Строка с\xa0ошибкой:', reason)
             renderEverything()
         })
 }
@@ -585,6 +637,7 @@ const init = () => {
     finishTurnButton.addEventListener('click', () => finishTurnButtonOnClick())
     moveList.addEventListener('copy', event => moveListViewOnCopy(event))
     showTurnsButton.addEventListener('click', () => showTurnsButtonOnClick())
+    errorField.addEventListener('click', () => clearErrorField())
 }
 
 

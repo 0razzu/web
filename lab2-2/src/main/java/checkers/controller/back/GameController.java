@@ -3,7 +3,10 @@ package checkers.controller.back;
 
 import checkers.dto.request.ChangeStatusRequest;
 import checkers.dto.request.CreateGameRequest;
-import checkers.dto.response.*;
+import checkers.dto.response.ApplyCurrentMoveResponse;
+import checkers.dto.response.CreateGameResponse;
+import checkers.dto.response.EditStateResponse;
+import checkers.dto.response.GetGameResponse;
 import checkers.dto.versatile.StepDto;
 import checkers.error.CheckersException;
 import checkers.service.GameService;
@@ -51,26 +54,27 @@ public class GameController {
     
     
     @PostMapping(path = "/{id}/moves", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ApplyCurrentMoveResponse applyCurrentMove(@PathVariable("id") String gameId) {
+    public ApplyCurrentMoveResponse applyCurrentMove(@PathVariable("id") String gameId) throws CheckersException {
         return gameService.applyCurrentMove(gameId);
     }
     
     
     @DeleteMapping(path = "/{id}/currentMove")
-    public EditStateResponse cancelCurrentMove(@PathVariable("id") String gameId) {
+    public EditStateResponse cancelCurrentMove(@PathVariable("id") String gameId) throws CheckersException {
         return gameService.cancelCurrentMove(gameId);
     }
     
     
     @GetMapping(path = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public GetGameResponse getGame(@PathVariable String id) {
+    public GetGameResponse getGame(@PathVariable String id) throws CheckersException {
         return gameService.getGame(id);
     }
     
     
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public List<GetGameResponse> getGames(
-            @RequestParam(value = "statusOnly", required = false, defaultValue = "false") boolean statusOnly) {
+            @RequestParam(value = "statusOnly", required = false, defaultValue = "false") boolean statusOnly)
+            throws CheckersException {
         return gameService.getGames(statusOnly);
     }
 }

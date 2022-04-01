@@ -126,7 +126,7 @@ public class GameService extends GameServiceBase {
     }
     
     
-    public ApplyCurrentMoveResponse applyCurrentMove(String gameId) {
+    public ApplyCurrentMoveResponse applyCurrentMove(String gameId) throws CheckersException {
         Game game = gameDao.get(gameId);
         List<Cell> changedCells = surrenderIfTimeIsUp(game);
         
@@ -153,7 +153,7 @@ public class GameService extends GameServiceBase {
     }
     
     
-    public EditStateResponse cancelCurrentMove(String gameId) {
+    public EditStateResponse cancelCurrentMove(String gameId) throws CheckersException {
         Game game = gameDao.get(gameId);
         
         List<Cell> changedCells = surrenderIfTimeIsUp(game);
@@ -173,7 +173,7 @@ public class GameService extends GameServiceBase {
     }
     
     
-    private void updateGameStatus(Game game) {
+    private void updateGameStatus(Game game) throws CheckersException {
         if (game.getStatus() == Status.RUNNING) {
             surrenderIfTimeIsUp(game);
             
@@ -183,7 +183,7 @@ public class GameService extends GameServiceBase {
     }
     
     
-    public GetGameResponse getGame(String id) {
+    public GetGameResponse getGame(String id) throws CheckersException {
         Game game = gameDao.get(id);
         
         updateGameStatus(game);
@@ -192,10 +192,11 @@ public class GameService extends GameServiceBase {
     }
     
     
-    public List<GetGameResponse> getGames(boolean statusOnly) {
+    public List<GetGameResponse> getGames(boolean statusOnly) throws CheckersException {
         List<Game> games = gameDao.getAll();
         
-        games.forEach(this::updateGameStatus);
+        for (Game game: games)
+            updateGameStatus(game);
         
         if (statusOnly)
             games = games.stream()

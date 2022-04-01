@@ -80,6 +80,12 @@ const mapBoardToCellList = () =>
     }))
 
 
+const throwIfError = (errorCode, reason) => {
+    if (errorCode)
+        throw {errorCode, reason}
+}
+
+
 const createGame = async () => {
     return post(
         '',
@@ -87,7 +93,9 @@ const createGame = async () => {
             board: mapBoardToCellList()
         })
     )
-        .then(({id, situation, status, whoseTurn: turn}) => {
+        .then(({id, situation, status, whoseTurn: turn, errorCode, reason}) => {
+            throwIfError(errorCode, reason)
+
             GAME_ID = id
             mapToSituation(situation)
             currentStatus = status
@@ -105,8 +113,7 @@ const parseTurns = async moveList => {
         })
     )
         .then(({id, board, situation, status, whoseTurn: turn, moveList, errorCode, reason}) => {
-            if (errorCode)
-                throw {errorCode, reason}
+            throwIfError(errorCode, reason)
 
             GAME_ID = id
             mapToBoard(board)
@@ -127,7 +134,9 @@ const makeStep = async ({from, to}) => {
             to: {row: to.row, col: to.col},
         })
     )
-        .then(({changedCells, situation, status, whoseTurn: turn}) => {
+        .then(({changedCells, situation, status, whoseTurn: turn, errorCode, reason}) => {
+            throwIfError(errorCode, reason)
+
             mapToSituation(situation)
             currentStatus = status
             whoseTurn = turn
@@ -139,7 +148,9 @@ const makeStep = async ({from, to}) => {
 
 const cancelTurn = async () => {
     return del(`/${GAME_ID}/currentMove`)
-        .then(({changedCells, situation, status, whoseTurn: turn}) => {
+        .then(({changedCells, situation, status, whoseTurn: turn, errorCode, reason}) => {
+            throwIfError(errorCode, reason)
+
             mapToSituation(situation)
             currentStatus = status
             whoseTurn = turn
@@ -151,7 +162,9 @@ const cancelTurn = async () => {
 
 const applyTurn = async () => {
     return post(`/${GAME_ID}/moves`)
-        .then(({changedCells, situation, status, whoseTurn: turn, lastMove}) => {
+        .then(({changedCells, situation, status, whoseTurn: turn, lastMove, errorCode, reason}) => {
+            throwIfError(errorCode, reason)
+
             mapToSituation(situation)
             currentStatus = status
             whoseTurn = turn
@@ -169,7 +182,9 @@ const surrender = async () => {
         `/${GAME_ID}/status`,
         JSON.stringify({status: STATUS.OVER})
     )
-        .then(({changedCells, situation, status, whoseTurn: turn}) => {
+        .then(({changedCells, situation, status, whoseTurn: turn, errorCode, reason}) => {
+            throwIfError(errorCode, reason)
+
             mapToSituation(situation)
             currentStatus = status
             whoseTurn = turn
@@ -181,7 +196,9 @@ const surrender = async () => {
 
 const getGame = async id => {
     return get(`/${id}`)
-        .then(({id, board, situation, status, whoseTurn: turn, moveList, currentMove}) => {
+        .then(({id, board, situation, status, whoseTurn: turn, moveList, currentMove, errorCode, reason}) => {
+            throwIfError(errorCode, reason)
+
             GAME_ID = id
             mapToBoard(board)
             mapToSituation(situation)
@@ -196,4 +213,9 @@ const getGame = async id => {
 
 const getGames = async () => {
     return get('?statusOnly=true')
+        .then(dto => {
+            throwIfError(dto.errorCode, dto.reason)
+
+            return dto
+        })
 }

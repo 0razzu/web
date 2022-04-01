@@ -213,7 +213,10 @@ public class GameServiceBase {
     }
     
     
-    protected List<Cell> surrender(Game game) {
+    protected List<Cell> surrender(Game game) throws CheckersException {
+        if (game.getStatus() != Status.RUNNING)
+            throw new CheckersException(GAME_OVER);
+        
         game.setStatus(Status.OVER);
         List<Cell> changedCells = cancelCurrentMove(game);
         toggleWhoseTurn(game);
@@ -222,7 +225,7 @@ public class GameServiceBase {
     }
     
     
-    protected List<Cell> surrenderIfTimeIsUp(Game game) {
+    protected List<Cell> surrenderIfTimeIsUp(Game game) throws CheckersException {
         if (game.getStatus() == Status.RUNNING
                 && Duration.between(game.getMoveStartTime(), LocalDateTime.now()).toSeconds() >= properties.getMoveTime())
             return surrender(game);
@@ -300,9 +303,6 @@ public class GameServiceBase {
             changedCells.addAll(togglePromptMode(to, game));
             changedCells.add(killedCell);
         }
-        
-        else
-            throw new CheckersException(WRONG_CELL_STATE);
         
         return changedCells;
     }

@@ -266,6 +266,8 @@ textarea {
 }
 
 .game-history {
+    display: flex;
+    flex-direction: column;
     height: 70vh;
     flex-grow: 1;
     flex-basis: 0;
