@@ -21,17 +21,17 @@ const CELL_STATE_CLASS = {
     [CELL_STATE.MUST_BE_FILLED]: 'must-be-filled',
     [CELL_STATE.KILLED]: 'killed',
 }
-const CHECKER_TYPE = {
+const CHECKER = {
     BLACK: 'BLACK',
     BLACK_KING: 'BLACK_KING',
     WHITE: 'WHITE',
     WHITE_KING: 'WHITE_KING',
 }
 const CHECKER_PIC = {
-    [CHECKER_TYPE.BLACK]: ROOT + '/img/black-checker.svg',
-    [CHECKER_TYPE.BLACK_KING]: ROOT + '/img/black-checker-king.svg',
-    [CHECKER_TYPE.WHITE]: ROOT + '/img/white-checker.svg',
-    [CHECKER_TYPE.WHITE_KING]: ROOT + '/img/white-checker-king.svg',
+    [CHECKER.BLACK]: ROOT + '/img/black-checker.svg',
+    [CHECKER.BLACK_KING]: ROOT + '/img/black-checker-king.svg',
+    [CHECKER.WHITE]: ROOT + '/img/white-checker.svg',
+    [CHECKER.WHITE_KING]: ROOT + '/img/white-checker-king.svg',
 }
 const TEAM = {
     BLACK: 'BLACK',
@@ -129,6 +129,7 @@ const defaultErrorHandler = e => {
             }
             case 'GAME_OVER': {
                 writeToErrorField('Игра окончена')
+
                 break
             }
             case undefined: {
@@ -228,14 +229,12 @@ const renderGameHeader = () => {
 const renderChecker = (row, col) => {
     const checker = BOARD[row][col].checker
 
-    BOARD_VIEW[row][col].innerHTML = checker == null? '' : '<img src="' + CHECKER_PIC[checker.type] + '">'
+    BOARD_VIEW[row][col].innerHTML = checker == null? '' : '<img src="' + CHECKER_PIC[checker] + '">'
 }
 
 
-const place = (type, row, col) => {
-    const cell = BOARD[row][col]
-
-    cell.checker = {type: type, cell: cell}
+const place = (checker, row, col) => {
+    BOARD[row][col].checker = checker
 }
 
 
@@ -322,7 +321,7 @@ const renderMove = moveStr => {
     else
         turnView.textContent += ' ' + moveStr
 
-    moveList.scrollTop = moveList.scrollHeight
+    moveListPanel.scrollTop = moveListPanel.scrollHeight
 }
 
 
@@ -333,7 +332,7 @@ const renderMoveListEntry = movePairStr => {
     turnView.appendChild(document.createTextNode(movePairStrNoNum))
     moveList.appendChild(turnView)
 
-    moveList.scrollTop = moveList.scrollHeight
+    moveListPanel.scrollTop = moveListPanel.scrollHeight
 }
 
 
@@ -347,10 +346,10 @@ const isTurnOf = (row, col) => {
     if (!hasChecker(row, col))
         return false
 
-    const type = BOARD[row][col].checker.type
+    const checker = BOARD[row][col].checker
 
-    return (whoseTurn === TEAM.WHITE && (type === CHECKER_TYPE.WHITE || type === CHECKER_TYPE.WHITE_KING)) ||
-        (whoseTurn === TEAM.BLACK && (type === CHECKER_TYPE.BLACK || type === CHECKER_TYPE.BLACK_KING))
+    return (whoseTurn === TEAM.WHITE && (checker === CHECKER.WHITE || checker === CHECKER.WHITE_KING)) ||
+        (whoseTurn === TEAM.BLACK && (checker === CHECKER.BLACK || checker === CHECKER.BLACK_KING))
 }
 
 
@@ -384,20 +383,13 @@ const togglePromptMode = cell => {
 
 
 const hintOrMove = async (row, col) => {
-    let changedCells = []
     let targetCell = BOARD[row][col]
 
     if (inPromptMode === null || (!inMove && inPromptMode === targetCell))
-        changedCells = togglePromptMode(targetCell)
+        return togglePromptMode(targetCell)
 
-    else if (targetCell.state === CELL_STATE.CAN_BE_FILLED || targetCell.state === CELL_STATE.MUST_BE_FILLED) {
-        changedCells = await makeStep({from: inPromptMode, to: targetCell})
-
-        inPromptMode = (targetCell.state === CELL_STATE.PROMPT)? targetCell : null
-        inMove = true
-    }
-
-    return changedCells
+    else if (targetCell.state === CELL_STATE.CAN_BE_FILLED || targetCell.state === CELL_STATE.MUST_BE_FILLED)
+        return await makeStep({from: inPromptMode, to: targetCell})
 }
 
 
@@ -405,9 +397,11 @@ const cellOnClick = (row, col) => {
     if (currentStatus === STATUS.RUNNING)
         hintOrMove(row, col)
             .then(changedCells => {
-                changedCells.forEach(cell => renderCell(cell.row, cell.col))
-                renderButtons()
-                renderStatus()
+                if (changedCells) {
+                    changedCells.forEach(cell => renderCell(cell.row, cell.col))
+                    renderButtons()
+                    renderStatus()
+                }
             })
             .catch(e => defaultErrorHandler(e))
 }
@@ -417,12 +411,12 @@ const startArrangement = () => {
     for (let row = 0; row < 3; row++)
         for (let col = 0; col < BOARD_SIZE; col++)
             if (isPlayCell(row, col))
-                place(CHECKER_TYPE.WHITE, row, col)
+                place(CHECKER.WHITE, row, col)
 
     for (let row = 5; row < BOARD_SIZE; row++)
         for (let col = 0; col < BOARD_SIZE; col++)
             if (isPlayCell(row, col))
-                place(CHECKER_TYPE.BLACK, row, col)
+                place(CHECKER.BLACK, row, col)
 }
 
 
@@ -432,15 +426,15 @@ const example1Arrangement = () => {
             if (isPlayCell(row, col))
                 clear(row, col)
 
-    place(CHECKER_TYPE.WHITE, 3, 5)
-    place(CHECKER_TYPE.WHITE, 3, 7)
+    place(CHECKER.WHITE, 3, 5)
+    place(CHECKER.WHITE, 3, 7)
 
-    place(CHECKER_TYPE.BLACK, 7, 1)
-    place(CHECKER_TYPE.BLACK_KING, 0, 2)
-    place(CHECKER_TYPE.BLACK, 4, 2)
-    place(CHECKER_TYPE.BLACK, 6, 2)
-    place(CHECKER_TYPE.BLACK, 6, 4)
-    place(CHECKER_TYPE.BLACK, 5, 7)
+    place(CHECKER.BLACK, 7, 1)
+    place(CHECKER.BLACK_KING, 0, 2)
+    place(CHECKER.BLACK, 4, 2)
+    place(CHECKER.BLACK, 6, 2)
+    place(CHECKER.BLACK, 6, 4)
+    place(CHECKER.BLACK, 5, 7)
 }
 
 
@@ -534,7 +528,6 @@ const surrenderButtonOnClick = () => {
     surrender()
         .then(changedCells => {
             changedCells.forEach(cell => renderCell(cell.row, cell.col))
-            inMove = false
             renderButtons()
             renderStatus()
         })
@@ -549,8 +542,6 @@ const cancelTurnButtonOnClick = () => {
     cancelTurn()
         .then(changedCells => {
             changedCells.forEach(cell => renderCell(cell.row, cell.col))
-            inMove = false
-            inPromptMode = null
             renderButtons()
             renderStatus()
         })
@@ -565,8 +556,6 @@ const finishTurnButtonOnClick = () => {
     applyTurn()
         .then(({changedCells, lastMove}) => {
             changedCells.forEach(cell => renderCell(cell.row, cell.col))
-            inMove = false
-            inPromptMode = null
             renderStatus()
             renderButtons()
 

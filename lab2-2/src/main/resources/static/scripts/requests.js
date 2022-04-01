@@ -57,7 +57,7 @@ const mapToBoardCell = cell => {
     const boardCell = BOARD[cell.row][cell.col]
 
     boardCell.state = cell.state
-    boardCell.checker = cell.checker? {type: cell.checker, cell: boardCell} : null  // TODO: is «cell» necessary?
+    boardCell.checker = cell.checker
 
     return boardCell
 }
@@ -66,18 +66,21 @@ const mapToBoardCell = cell => {
 const mapToCellList = cells => cells.map(cell => mapToBoardCell(cell))
 
 
-const mapToBoard = board => board.forEach(cell =>
-    cell && mapToBoardCell(cell)
+const mapToBoard = board => board.forEach(cell => {
+        if (cell) {
+            const boardCell = mapToBoardCell(cell)
+
+            if (cell.state === CELL_STATE.PROMPT)
+                inPromptMode = boardCell
+
+            else if (cell.state === CELL_STATE.CAN_BE_FILLED || cell.state === CELL_STATE.MUST_BE_FILLED)
+                inMove = true
+        }
+    }
 )
 
 
-const mapBoardToCellList = () =>
-    BOARD.reduce((acc, row) => acc.concat(row), []).filter(cell => cell).map(cell => ({
-        row: cell.row,
-        col: cell.col,
-        state: cell.state,
-        checker: cell.checker?.type
-    }))
+const mapBoardToCellList = () => BOARD.reduce((acc, row) => acc.concat(row), []).filter(cell => cell)
 
 
 const throwIfError = (errorCode, reason) => {
@@ -137,11 +140,14 @@ const makeStep = async ({from, to}) => {
         .then(({changedCells, situation, status, whoseTurn: turn, errorCode, reason}) => {
             throwIfError(errorCode, reason)
 
+            const changedBoardCells = mapToCellList(changedCells)
             mapToSituation(situation)
             currentStatus = status
             whoseTurn = turn
+            inPromptMode = (to.state === CELL_STATE.PROMPT)? to : null
+            inMove = true
 
-            return mapToCellList(changedCells)
+            return changedBoardCells
         })
 }
 
@@ -154,6 +160,8 @@ const cancelTurn = async () => {
             mapToSituation(situation)
             currentStatus = status
             whoseTurn = turn
+            inMove = false
+            inPromptMode = null
 
             return mapToCellList(changedCells)
         })
@@ -168,6 +176,8 @@ const applyTurn = async () => {
             mapToSituation(situation)
             currentStatus = status
             whoseTurn = turn
+            inMove = false
+            inPromptMode = null
 
             return {
                 changedCells: mapToCellList(changedCells),
@@ -188,6 +198,8 @@ const surrender = async () => {
             mapToSituation(situation)
             currentStatus = status
             whoseTurn = turn
+            inMove = false
+            inPromptMode = null
 
             return mapToCellList(changedCells)
         })

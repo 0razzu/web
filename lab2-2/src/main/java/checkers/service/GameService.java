@@ -7,7 +7,10 @@ import checkers.controller.util.ToDtoMapper;
 import checkers.database.dao.GameDao;
 import checkers.dto.request.ChangeStatusRequest;
 import checkers.dto.request.CreateGameRequest;
-import checkers.dto.response.*;
+import checkers.dto.response.ApplyCurrentMoveResponse;
+import checkers.dto.response.CreateGameResponse;
+import checkers.dto.response.EditStateResponse;
+import checkers.dto.response.GetGameResponse;
 import checkers.dto.versatile.StepDto;
 import checkers.error.CheckersException;
 import checkers.model.*;
@@ -19,8 +22,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static checkers.controller.util.FromDtoMapper.map;
-import static checkers.error.CheckersErrorCode.INCORRECT_STATUS;
-import static checkers.error.CheckersErrorCode.PARSING_ERROR;
+import static checkers.error.CheckersErrorCode.*;
 
 
 @Service
@@ -102,6 +104,12 @@ public class GameService extends GameServiceBase {
     
     public EditStateResponse makeStep(String gameId, StepDto request) throws CheckersException {
         Game game = gameDao.get(gameId);
+    
+        surrenderIfTimeIsUp(game);
+    
+        if (game.getStatus() == Status.OVER)
+            throw new CheckersException(GAME_OVER);
+        
         Cell[][] board = game.getBoard();
         Step step = map(request, board);
         Cell from = step.getFrom();
@@ -109,13 +117,9 @@ public class GameService extends GameServiceBase {
         if (from.getState() != CellState.PROMPT)
             togglePromptMode(from, game); // as enter-prompt-mode clicks are not sent to the server
         
-        List<Cell> changedCells = surrenderIfTimeIsUp(game);
+        List<Cell> changedCells = makeStep(step, game);
         
-        if (game.getStatus() == Status.RUNNING) {
-            changedCells.addAll(makeStep(step, game));
-            
-            gameDao.update(gameId, game);
-        }
+        gameDao.update(gameId, game);
         
         return ToDtoMapper.map(
                 changedCells,
@@ -128,20 +132,19 @@ public class GameService extends GameServiceBase {
     
     public ApplyCurrentMoveResponse applyCurrentMove(String gameId) throws CheckersException {
         Game game = gameDao.get(gameId);
-        List<Cell> changedCells = surrenderIfTimeIsUp(game);
+        surrenderIfTimeIsUp(game);
         
-        Move currentMove = null;
+        if (game.getStatus() == Status.OVER)
+            throw new CheckersException(GAME_OVER);
         
-        if (game.getStatus() == Status.RUNNING) {
-            Team whoseTurn = game.getWhoseTurn();
-            currentMove = game.getCurrentMove();
-            
-            changedCells.addAll(applyCurrentMove(game));
-            
-            gameDao.update(gameId, game);
-            
-            LOGGER.info("Game {}: {} made a move: {}", game.getId(), whoseTurn, ToDtoMapper.mapMoveToStr(currentMove));
-        }
+        Team whoseTurn = game.getWhoseTurn();
+        Move currentMove = game.getCurrentMove();
+    
+        List<Cell> changedCells = applyCurrentMove(game);
+        
+        gameDao.update(gameId, game);
+        
+        LOGGER.info("Game {}: {} made a move: {}", game.getId(), whoseTurn, ToDtoMapper.mapMoveToStr(currentMove));
         
         return ToDtoMapper.map(
                 changedCells,
@@ -156,13 +159,14 @@ public class GameService extends GameServiceBase {
     public EditStateResponse cancelCurrentMove(String gameId) throws CheckersException {
         Game game = gameDao.get(gameId);
         
-        List<Cell> changedCells = surrenderIfTimeIsUp(game);
+        surrenderIfTimeIsUp(game);
         
-        if (game.getStatus() == Status.RUNNING) {
-            changedCells.addAll(cancelCurrentMove(game));
-            
-            gameDao.update(gameId, game);
-        }
+        if (game.getStatus() == Status.OVER)
+            throw new CheckersException(GAME_OVER);
+    
+        List<Cell> changedCells = cancelCurrentMove(game);
+        
+        gameDao.update(gameId, game);
         
         return ToDtoMapper.map(
                 changedCells,

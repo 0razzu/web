@@ -271,7 +271,7 @@ public class GameServiceBase {
         List<Cell> changedCells = new ArrayList<>();
         
         if (game.getStatus() == Status.OVER)
-            return changedCells;
+            throw new CheckersException(GAME_OVER);
         
         Cell from = step.getFrom();
         Cell to = step.getTo();
