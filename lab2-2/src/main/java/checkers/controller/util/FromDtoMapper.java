@@ -70,6 +70,9 @@ public class FromDtoMapper {
     
     public static Cell[][] map(List<FullCellDto> gameDtoBoard) throws CheckersException {
         Cell[][] board = new Cell[BOARD_SIZE][BOARD_SIZE];
+        for (int row = 0; row < BOARD_SIZE; row++)
+            for (int col = (row % 2 == 0)? 0 : 1; col < BOARD_SIZE; col += 2)
+                board[row][col] = new Cell(row, col, CellState.DEFAULT, null);
         
         for (FullCellDto cellDto: gameDtoBoard) {
             int row = cellDto.getRow();
@@ -78,7 +81,10 @@ public class FromDtoMapper {
             if (!isPlayCell(row, col))
                 throw new CheckersException(NO_SUCH_CELL, cellDto.toString());
             
-            board[row][col] = new Cell(row, col, cellDto.getState(), cellDto.getChecker());
+            Cell cell = board[row][col];
+            
+            cell.setState(cellDto.getState());
+            cell.setChecker(cellDto.getChecker());
         }
         
         return board;
