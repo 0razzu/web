@@ -431,10 +431,15 @@ const startArrangement = () => {
 
 
 const example1Arrangement = () => {
-    place(CHECKER.WHITE, 1, 1)
-    place(CHECKER.BLACK, 2, 2)
-    place(CHECKER.WHITE, 3, 3)
+    place(CHECKER.WHITE, 3, 5)
     place(CHECKER.WHITE, 3, 7)
+
+    place(CHECKER.BLACK, 7, 1)
+    place(CHECKER.BLACK_KING, 0, 2)
+    place(CHECKER.BLACK, 4, 2)
+    place(CHECKER.BLACK, 6, 2)
+    place(CHECKER.BLACK, 6, 4)
+    place(CHECKER.BLACK, 5, 7)
 }
 
 
