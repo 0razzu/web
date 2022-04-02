@@ -66,8 +66,10 @@ const mapToBoardCell = cell => {
 const mapToCellList = cells => cells.map(cell => mapToBoardCell(cell))
 
 
-const mapToBoard = board => board.forEach(cell => {
-        if (cell) {
+const mapToBoard = board => {
+    clearBoard()
+
+    board.forEach(cell => {
             const boardCell = mapToBoardCell(cell)
 
             if (cell.state === CELL_STATE.PROMPT)
@@ -76,8 +78,8 @@ const mapToBoard = board => board.forEach(cell => {
             else if (cell.state === CELL_STATE.CAN_BE_FILLED || cell.state === CELL_STATE.MUST_BE_FILLED)
                 inMove = true
         }
-    }
-)
+    )
+}
 
 
 const mapBoardToCellList = () => BOARD.reduce((acc, row) => acc.concat(row), []).filter(cell => cell)

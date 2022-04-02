@@ -51,24 +51,24 @@ public class GameService extends GameServiceBase {
     
     
     public CreateGameResponse createGameFromMoveList(CreateGameRequest request) throws CheckersException {
-        List<String> moveListStr = request.getMoveList();
+        List<String> moveListStr = request.getMoveList().stream()
+                .filter(line -> !line.isBlank()).map(String::trim).collect(Collectors.toList());
         Cell[][] board = map(request.getBoard());
         Game game = createGame(board);
         
         for (int lineIndex = 0; lineIndex < moveListStr.size(); lineIndex++) {
-            String line = moveListStr.get(lineIndex).trim();
+            String line = moveListStr.get(lineIndex);
             
-            if (!line.isEmpty())
-                try {
-                    String[] splitLine = line.split("\\s+");
-                    
-                    makeMove(FromDtoMapper.strToMove(splitLine[1], Team.WHITE, board), game);
-                    
-                    if (lineIndex != moveListStr.size() - 1 || splitLine.length == 3)
-                        makeMove(FromDtoMapper.strToMove(splitLine[2], Team.BLACK, board), game);
-                } catch (CheckersException | ArrayIndexOutOfBoundsException e) {
-                    throw new CheckersException(PARSING_ERROR, line, e);
-                }
+            try {
+                String[] splitLine = line.split("\\s+");
+                
+                makeMove(FromDtoMapper.strToMove(splitLine[1], Team.WHITE, board), game);
+                
+                if (lineIndex != moveListStr.size() - 1 || splitLine.length == 3)
+                    makeMove(FromDtoMapper.strToMove(splitLine[2], Team.BLACK, board), game);
+            } catch (CheckersException | ArrayIndexOutOfBoundsException e) {
+                throw new CheckersException(PARSING_ERROR, line, e);
+            }
         }
         
         return ToDtoMapper.map(
@@ -104,9 +104,9 @@ public class GameService extends GameServiceBase {
     
     public EditStateResponse makeStep(String gameId, StepDto request) throws CheckersException {
         Game game = gameDao.get(gameId);
-    
+        
         surrenderIfTimeIsUp(game);
-    
+        
         if (game.getStatus() == Status.OVER)
             throw new CheckersException(GAME_OVER);
         
@@ -139,7 +139,7 @@ public class GameService extends GameServiceBase {
         
         Team whoseTurn = game.getWhoseTurn();
         Move currentMove = game.getCurrentMove();
-    
+        
         List<Cell> changedCells = applyCurrentMove(game);
         
         gameDao.update(gameId, game);
@@ -163,7 +163,7 @@ public class GameService extends GameServiceBase {
         
         if (game.getStatus() == Status.OVER)
             throw new CheckersException(GAME_OVER);
-    
+        
         List<Cell> changedCells = cancelCurrentMove(game);
         
         gameDao.update(gameId, game);

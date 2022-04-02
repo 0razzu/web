@@ -243,6 +243,16 @@ const clear = (row, col) => {
 }
 
 
+const clearBoard = () => {
+    for (let row = 0; row < BOARD_SIZE; row++)
+        for (let col = 0; col < BOARD_SIZE; col++)
+            if (isPlayCell(row, col)) {
+                BOARD[row][col].state = CELL_STATE.DEFAULT
+                clear(row, col)
+            }
+}
+
+
 const renderCell = (row, col) => {
     if (!isPlayCell(row, col))
         return
@@ -421,30 +431,15 @@ const startArrangement = () => {
 
 
 const example1Arrangement = () => {
-    for (let row = 0; row < BOARD_SIZE; row++)
-        for (let col = 0; col < BOARD_SIZE; col++)
-            if (isPlayCell(row, col))
-                clear(row, col)
-
-    place(CHECKER.WHITE, 3, 5)
+    place(CHECKER.WHITE, 1, 1)
+    place(CHECKER.BLACK, 2, 2)
+    place(CHECKER.WHITE, 3, 3)
     place(CHECKER.WHITE, 3, 7)
-
-    place(CHECKER.BLACK, 7, 1)
-    place(CHECKER.BLACK_KING, 0, 2)
-    place(CHECKER.BLACK, 4, 2)
-    place(CHECKER.BLACK, 6, 2)
-    place(CHECKER.BLACK, 6, 4)
-    place(CHECKER.BLACK, 5, 7)
 }
 
 
 const resetEverything = (resetGameHistoryInterior = true) => {
-    for (let row = 0; row < BOARD_SIZE; row++)
-        for (let col = 0; col < BOARD_SIZE; col++)
-            if (isPlayCell(row, col)) {
-                BOARD[row][col].state = CELL_STATE.DEFAULT
-                clear(row, col)
-            }
+    clearBoard()
 
     SITUATION.clear()
     inPromptMode = null

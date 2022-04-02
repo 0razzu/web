@@ -126,7 +126,7 @@ public class ToDtoMapper {
     
     
     public static EditStateResponse map(List<Cell> changedCells, Multimap<Cell, PossibleMove> situation,
-                                              Status status, Team whoseTurn) {
+                                        Status status, Team whoseTurn) {
         return new EditStateResponse(
                 map(changedCells),
                 map(situation),
@@ -139,14 +139,16 @@ public class ToDtoMapper {
     public static List<FullCellDto> map(Cell[][] board) {
         return board == null?
                 null :
-                Arrays.stream(board).map(row -> Arrays.stream(row).filter(Objects::nonNull).map(cell ->
-                        new FullCellDto(
-                                cell.getRow(),
-                                cell.getCol(),
-                                cell.getState(),
-                                cell.getChecker()
-                        )
-                ).collect(Collectors.toList())).collect(ArrayList::new, ArrayList::addAll, ArrayList::addAll);
+                Arrays.stream(board).map(row -> Arrays.stream(row)
+                        .filter(cell -> cell != null && (cell.getState() != CellState.DEFAULT || cell.getChecker() != null))
+                        .map(cell ->
+                                new FullCellDto(
+                                        cell.getRow(),
+                                        cell.getCol(),
+                                        cell.getState(),
+                                        cell.getChecker()
+                                )
+                        ).collect(Collectors.toList())).collect(ArrayList::new, ArrayList::addAll, ArrayList::addAll);
     }
     
     
