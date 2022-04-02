@@ -505,6 +505,66 @@ public class TestGameService {
     
     
     @Test
+    void testCreateGameFromMoveListHaveKilledMismatch1() {
+        List<FullCellDto> board = List.of(
+                new FullCellDto(1, 1, CellState.DEFAULT, Checker.WHITE)
+        );
+        List<String> moveList = List.of(
+                "1. b2:c3"
+        );
+        CreateGameRequest request = new CreateGameRequest(board, moveList);
+        
+        CheckersException e = assertThrows(CheckersException.class, () -> gameService.createGameFromMoveList(request));
+        
+        assertAll(
+                () -> assertEquals(PARSING_ERROR, e.getErrorCode()),
+                () -> assertEquals(moveList.get(0), e.getReason())
+        );
+    }
+    
+    
+    @Test
+    void testCreateGameFromMoveListHaveKilledMismatch2() {
+        List<FullCellDto> board = List.of(
+                new FullCellDto(1, 1, CellState.DEFAULT, Checker.WHITE),
+                new FullCellDto(4, 4, CellState.DEFAULT, Checker.BLACK)
+        );
+        List<String> moveList = List.of(
+                "1. b2-c3 d4-c3"
+        );
+        CreateGameRequest request = new CreateGameRequest(board, moveList);
+        
+        CheckersException e = assertThrows(CheckersException.class, () -> gameService.createGameFromMoveList(request));
+        
+        assertAll(
+                () -> assertEquals(PARSING_ERROR, e.getErrorCode()),
+                () -> assertEquals(moveList.get(0), e.getReason())
+        );
+    }
+    
+    
+    @Test
+    void testCreateGameFromMoveListUnfinishedMove() {
+        List<FullCellDto> board = List.of(
+                new FullCellDto(1, 3, CellState.DEFAULT, Checker.WHITE),
+                new FullCellDto(2, 2, CellState.DEFAULT, Checker.WHITE),
+                new FullCellDto(3, 5, CellState.DEFAULT, Checker.BLACK)
+        );
+        List<String> moveList = List.of(
+                "1. b2-e3 f4:d2"
+        );
+        CreateGameRequest request = new CreateGameRequest(board, moveList);
+        
+        CheckersException e = assertThrows(CheckersException.class, () -> gameService.createGameFromMoveList(request));
+        
+        assertAll(
+                () -> assertEquals(PARSING_ERROR, e.getErrorCode()),
+                () -> assertEquals(moveList.get(0), e.getReason())
+        );
+    }
+    
+    
+    @Test
     void testCreateGameFromMoveListStepToNowhere1() {
         List<FullCellDto> board = List.of(
                 new FullCellDto(2, 0, CellState.DEFAULT, Checker.WHITE)
