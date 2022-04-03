@@ -89,6 +89,10 @@ public class GameService extends GameServiceBase {
             throw new CheckersException(INCORRECT_STATUS, String.valueOf(status));
         
         Game game = gameDao.get(gameId);
+    
+        if (game.getStatus() == Status.OVER)
+            throw new CheckersException(GAME_OVER);
+        
         List<Cell> changedCells = surrender(game);
         
         gameDao.update(gameId, game);

@@ -525,7 +525,8 @@ public class TestGameService {
     @Test
     void testCreateGameFromMoveListHaveKilledMismatch1() {
         List<FullCellDto> board = List.of(
-                new FullCellDto(1, 1, CellState.DEFAULT, Checker.WHITE)
+                new FullCellDto(1, 1, CellState.DEFAULT, Checker.WHITE),
+                new FullCellDto(3, 3, CellState.DEFAULT, Checker.BLACK)
         );
         List<String> moveList = List.of(
                 "1. b2:c3"
@@ -545,10 +546,10 @@ public class TestGameService {
     void testCreateGameFromMoveListHaveKilledMismatch2() {
         List<FullCellDto> board = List.of(
                 new FullCellDto(1, 1, CellState.DEFAULT, Checker.WHITE),
-                new FullCellDto(4, 4, CellState.DEFAULT, Checker.BLACK)
+                new FullCellDto(3, 3, CellState.DEFAULT, Checker.BLACK)
         );
         List<String> moveList = List.of(
-                "1. b2-c3 d4-c3"
+                "1. b2-c3 d4-b2"
         );
         CreateGameRequest request = new CreateGameRequest(board, moveList);
         

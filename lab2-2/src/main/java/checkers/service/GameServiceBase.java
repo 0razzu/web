@@ -214,9 +214,6 @@ public class GameServiceBase {
     
     
     protected List<Cell> surrender(Game game) throws CheckersException {
-        if (game.getStatus() != Status.RUNNING)
-            throw new CheckersException(GAME_OVER);
-        
         game.setStatus(Status.OVER);
         List<Cell> changedCells = cancelCurrentMove(game);
         toggleWhoseTurn(game);
@@ -270,10 +267,6 @@ public class GameServiceBase {
             throw new CheckersException(NO_SUCH_CELL, step.toString());
         
         List<Cell> changedCells = new ArrayList<>();
-        
-        if (game.getStatus() == Status.OVER)
-            throw new CheckersException(GAME_OVER);
-        
         Cell from = step.getFrom();
         Cell to = step.getTo();
         CellState toState = to.getState();
