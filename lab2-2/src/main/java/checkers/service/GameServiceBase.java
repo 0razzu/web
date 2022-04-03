@@ -220,6 +220,7 @@ public class GameServiceBase {
         game.setStatus(Status.OVER);
         List<Cell> changedCells = cancelCurrentMove(game);
         toggleWhoseTurn(game);
+        game.setSituation(ArrayListMultimap.create());
         
         return changedCells;
     }

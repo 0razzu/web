@@ -3,26 +3,27 @@ package checkers.service;
 
 import checkers.Properties;
 import checkers.database.dao.GameDao;
+import checkers.dto.request.ChangeStatusRequest;
 import checkers.dto.request.CreateGameRequest;
 import checkers.dto.response.CreateGameResponse;
+import checkers.dto.response.EditStateResponse;
 import checkers.dto.response.PossibleMoveDto;
 import checkers.dto.response.SituationEntryDto;
 import checkers.dto.versatile.CellDto;
 import checkers.dto.versatile.FullCellDto;
+import checkers.dto.versatile.StepDto;
 import checkers.error.CheckersException;
 import checkers.model.*;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
-import static checkers.error.CheckersErrorCode.NO_SUCH_CELL;
-import static checkers.error.CheckersErrorCode.PARSING_ERROR;
+import static checkers.error.CheckersErrorCode.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
 
 
 public class TestGameService {
@@ -34,7 +35,24 @@ public class TestGameService {
     @BeforeAll
     static void configureMocks() {
         when(properties.getMoveTime()).thenReturn(Integer.MAX_VALUE);
-        when(gameDao.put(any(Game.class))).thenReturn("1");
+        
+        Map<String, Game> games = new HashMap<>();
+        
+        doAnswer(invocation -> {
+            Game game = (Game) invocation.getArguments()[0];
+            String id = UUID.randomUUID().toString();
+            
+            games.put(id, game);
+            game.setId(id);
+            
+            return id;
+        }).when(gameDao).put(any(Game.class));
+        
+        doAnswer(invocation -> {
+            String id = (String) invocation.getArguments()[0];
+            
+            return games.get(id);
+        }).when(gameDao).get(anyString());
     }
     
     
@@ -67,7 +85,7 @@ public class TestGameService {
         CreateGameResponse response = assertDoesNotThrow(() -> gameService.createGame(request));
         
         assertAll(
-                () -> assertEquals("1", response.getId(), "id"),
+                () -> assertNotNull(response.getId(), "id"),
                 () -> assertEquals(expectedSituation, response.getSituation(), "situation"),
                 () -> assertEquals(Team.WHITE, response.getWhoseTurn(), "whoseTurn"),
                 () -> assertEquals(Status.RUNNING, response.getStatus(), "status")
@@ -122,7 +140,7 @@ public class TestGameService {
         CreateGameResponse response = assertDoesNotThrow(() -> gameService.createGameFromMoveList(request));
         
         assertAll(
-                () -> assertEquals("1", response.getId(), "id"),
+                () -> assertNotNull(response.getId(), "id"),
                 () -> assertEquals(expectedBoard, response.getBoard(), "board"),
                 () -> assertEquals(Team.WHITE, response.getWhoseTurn(), "whoseTurn"),
                 () -> assertEquals(Status.RUNNING, response.getStatus(), "status"),
@@ -162,7 +180,7 @@ public class TestGameService {
         CreateGameResponse response = assertDoesNotThrow(() -> gameService.createGameFromMoveList(request));
         
         assertAll(
-                () -> assertEquals("1", response.getId(), "id"),
+                () -> assertNotNull(response.getId(), "id"),
                 () -> assertEquals(expectedBoard, response.getBoard(), "board"),
                 () -> assertEquals(Team.BLACK, response.getWhoseTurn(), "whoseTurn"),
                 () -> assertEquals(Status.RUNNING, response.getStatus(), "status"),
@@ -201,7 +219,7 @@ public class TestGameService {
         CreateGameResponse response = assertDoesNotThrow(() -> gameService.createGameFromMoveList(request));
         
         assertAll(
-                () -> assertEquals("1", response.getId(), "id"),
+                () -> assertNotNull(response.getId(), "id"),
                 () -> assertEquals(expectedBoard, response.getBoard(), "board"),
                 () -> assertEquals(Team.WHITE, response.getWhoseTurn(), "whoseTurn"),
                 () -> assertEquals(Status.RUNNING, response.getStatus(), "status"),
@@ -240,7 +258,7 @@ public class TestGameService {
         List<SituationEntryDto> responseSituation = response.getSituation();
         
         assertAll(
-                () -> assertEquals("1", response.getId(), "id"),
+                () -> assertNotNull(response.getId(), "id"),
                 () -> assertEquals(expectedBoard, response.getBoard(), "board"),
                 () -> assertEquals(Team.BLACK, response.getWhoseTurn(), "whoseTurn"),
                 () -> assertEquals(Status.RUNNING, response.getStatus(), "status"),
@@ -272,7 +290,7 @@ public class TestGameService {
         CreateGameResponse response = assertDoesNotThrow(() -> gameService.createGameFromMoveList(request));
         
         assertAll(
-                () -> assertEquals("1", response.getId(), "id"),
+                () -> assertNotNull(response.getId(), "id"),
                 () -> assertEquals(expectedBoard, response.getBoard(), "board"),
                 () -> assertEquals(Team.WHITE, response.getWhoseTurn(), "whoseTurn"),
                 () -> assertEquals(Status.OVER, response.getStatus(), "status"),
@@ -301,7 +319,7 @@ public class TestGameService {
         CreateGameResponse response = assertDoesNotThrow(() -> gameService.createGameFromMoveList(request));
         
         assertAll(
-                () -> assertEquals("1", response.getId(), "id"),
+                () -> assertNotNull(response.getId(), "id"),
                 () -> assertEquals(expectedBoard, response.getBoard(), "board"),
                 () -> assertEquals(Team.BLACK, response.getWhoseTurn(), "whoseTurn"),
                 () -> assertEquals(Status.OVER, response.getStatus(), "status"),
@@ -332,7 +350,7 @@ public class TestGameService {
         CreateGameResponse response = assertDoesNotThrow(() -> gameService.createGameFromMoveList(request));
         
         assertAll(
-                () -> assertEquals("1", response.getId(), "id"),
+                () -> assertNotNull(response.getId(), "id"),
                 () -> assertEquals(expectedBoard, response.getBoard(), "board"),
                 () -> assertEquals(Team.BLACK, response.getWhoseTurn(), "whoseTurn"),
                 () -> assertEquals(Status.OVER, response.getStatus(), "status"),
@@ -368,7 +386,7 @@ public class TestGameService {
         CreateGameResponse response = assertDoesNotThrow(() -> gameService.createGameFromMoveList(request));
         
         assertAll(
-                () -> assertEquals("1", response.getId(), "id"),
+                () -> assertNotNull(response.getId(), "id"),
                 () -> assertEquals(expectedBoard, response.getBoard(), "board"),
                 () -> assertEquals(Team.BLACK, response.getWhoseTurn(), "whoseTurn"),
                 () -> assertEquals(Status.RUNNING, response.getStatus(), "status"),
@@ -617,6 +635,112 @@ public class TestGameService {
         assertAll(
                 () -> assertEquals(PARSING_ERROR, e.getErrorCode()),
                 () -> assertEquals(moveList.get(0), e.getReason())
+        );
+    }
+    
+    
+    @Test
+    void testSurrenderAfterCreation() throws CheckersException {
+        List<FullCellDto> board = List.of(
+                new FullCellDto(1, 1, CellState.DEFAULT, Checker.WHITE),
+                new FullCellDto(3, 5, CellState.DEFAULT, Checker.BLACK)
+        );
+        String gameId = gameService.createGame(new CreateGameRequest(board, null)).getId();
+        
+        EditStateResponse response = assertDoesNotThrow(() ->
+                gameService.surrender(gameId, new ChangeStatusRequest(Status.OVER)));
+        
+        assertAll(
+                () -> assertEquals(0, response.getChangedCells().size(), "changed cells size"),
+                () -> assertEquals(0, response.getSituation().size(), "situation size"),
+                () -> assertEquals(Status.OVER, response.getStatus(), "status"),
+                () -> assertEquals(Team.BLACK, response.getWhoseTurn(), "whose turn")
+        );
+    }
+    
+    
+    @Test
+    void testSurrenderInMove() throws CheckersException {
+        List<FullCellDto> board = List.of(
+                new FullCellDto(1, 1, CellState.DEFAULT, Checker.WHITE),
+                new FullCellDto(3, 5, CellState.DEFAULT, Checker.BLACK)
+        );
+        String gameId = gameService.createGame(new CreateGameRequest(board, null)).getId();
+        gameService.makeStep(gameId, new StepDto(new CellDto(1, 1), new CellDto(2, 0)));
+        
+        Set<FullCellDto> expectedChangedCells = Set.of(
+                new FullCellDto(1, 1, CellState.DEFAULT, Checker.WHITE),
+                new FullCellDto(2, 0, CellState.DEFAULT, null)
+        );
+        
+        EditStateResponse response = assertDoesNotThrow(() ->
+                gameService.surrender(gameId, new ChangeStatusRequest(Status.OVER)));
+        
+        assertAll(
+                () -> assertEquals(expectedChangedCells, Set.copyOf(response.getChangedCells()), "changed cells"),
+                () -> assertEquals(0, response.getSituation().size(), "situation size"),
+                () -> assertEquals(Status.OVER, response.getStatus(), "status"),
+                () -> assertEquals(Team.BLACK, response.getWhoseTurn(), "whose turn")
+        );
+    }
+    
+    
+    @Test
+    void testSurrenderAfterMove() throws CheckersException {
+        List<FullCellDto> board = List.of(
+                new FullCellDto(1, 1, CellState.DEFAULT, Checker.WHITE),
+                new FullCellDto(3, 5, CellState.DEFAULT, Checker.BLACK)
+        );
+        String gameId = gameService.createGame(new CreateGameRequest(board, null)).getId();
+        gameService.makeStep(gameId, new StepDto(new CellDto(1, 1), new CellDto(2, 0)));
+        gameService.applyCurrentMove(gameId);
+        
+        EditStateResponse response = assertDoesNotThrow(() ->
+                gameService.surrender(gameId, new ChangeStatusRequest(Status.OVER)));
+        
+        assertAll(
+                () -> assertEquals(0, response.getChangedCells().size(), "changed cells size"),
+                () -> assertEquals(0, response.getSituation().size(), "situation size"),
+                () -> assertEquals(Status.OVER, response.getStatus(), "status"),
+                () -> assertEquals(Team.WHITE, response.getWhoseTurn(), "whose turn")
+        );
+    }
+    
+    
+    @Test
+    void testSurrenderIncorrectStatus() throws CheckersException {
+        List<FullCellDto> board = List.of(
+                new FullCellDto(1, 1, CellState.DEFAULT, Checker.WHITE),
+                new FullCellDto(3, 5, CellState.DEFAULT, Checker.BLACK)
+        );
+        String gameId = gameService.createGame(new CreateGameRequest(board, null)).getId();
+        
+        CheckersException e = assertThrows(CheckersException.class, () ->
+                gameService.surrender(gameId, new ChangeStatusRequest(Status.RUNNING)));
+        
+        assertAll(
+                () -> assertEquals(INCORRECT_STATUS, e.getErrorCode()),
+                () -> assertEquals(Status.RUNNING.toString(), e.getReason())
+        );
+    }
+    
+    
+    @Test
+    void testSurrenderGameOver() throws CheckersException {
+        List<FullCellDto> board = List.of(
+                new FullCellDto(1, 1, CellState.DEFAULT, Checker.WHITE),
+                new FullCellDto(2, 2, CellState.DEFAULT, Checker.BLACK)
+        );
+        String gameId = gameService.createGame(new CreateGameRequest(board, null)).getId();
+        gameService.makeStep(gameId, new StepDto(new CellDto(1, 1), new CellDto(3, 3)));
+        gameService.applyCurrentMove(gameId);
+        
+        CheckersException e = assertThrows(CheckersException.class, () ->
+                gameService.surrender(gameId, new ChangeStatusRequest(Status.OVER)));
+        
+        assertAll(
+                () -> assertEquals(GAME_OVER, e.getErrorCode()),
+                () -> assertNull(e.getReason())
         );
     }
 }
