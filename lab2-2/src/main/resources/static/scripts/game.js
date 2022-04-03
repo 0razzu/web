@@ -119,6 +119,10 @@ const defaultErrorHandler = e => {
                 writeToErrorField('Невозможный ход')
                 break
             }
+            case 'MOVE_NOT_FINISHED': {
+                writeToErrorField('Текущий ход не завершён')
+                break
+            }
             case 'PARSING_ERROR': {
                 writeToErrorField('Не\xa0удалось прочитать партию. Строка с\xa0ошибкой:', reason)
                 break

@@ -213,7 +213,7 @@ public class GameServiceBase {
     }
     
     
-    protected List<Cell> surrender(Game game) throws CheckersException {
+    protected List<Cell> surrender(Game game) {
         game.setStatus(Status.OVER);
         List<Cell> changedCells = cancelCurrentMove(game);
         toggleWhoseTurn(game);
@@ -319,11 +319,9 @@ public class GameServiceBase {
     }
     
     
-    protected List<Cell> applyCurrentMove(Game game) {
-        List<Cell> changedCells = new ArrayList<>();
-        
-        if (game.getStatus() == Status.OVER)
-            return changedCells;
+    protected List<Cell> applyCurrentMove(Game game) throws CheckersException {
+        if (!game.getSituation().isEmpty())
+            throw new CheckersException(MOVE_NOT_FINISHED);
         
         Cell[][] board = game.getBoard();
         List<Cell> killed = game.getKilled();
@@ -333,7 +331,7 @@ public class GameServiceBase {
             cell.setState(CellState.DEFAULT);
         }
         
-        changedCells.addAll(killed);
+        List<Cell> changedCells = new ArrayList<>(killed);
         killed.clear();
         game.getMoveList().add(game.getCurrentMove());
         game.setCurrentMove(null);

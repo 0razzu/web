@@ -5,10 +5,7 @@ import checkers.Properties;
 import checkers.database.dao.GameDao;
 import checkers.dto.request.ChangeStatusRequest;
 import checkers.dto.request.CreateGameRequest;
-import checkers.dto.response.CreateGameResponse;
-import checkers.dto.response.EditStateResponse;
-import checkers.dto.response.PossibleMoveDto;
-import checkers.dto.response.SituationEntryDto;
+import checkers.dto.response.*;
 import checkers.dto.versatile.CellDto;
 import checkers.dto.versatile.FullCellDto;
 import checkers.dto.versatile.StepDto;
@@ -1072,6 +1069,109 @@ public class TestGameService {
                                 new Cell(3, 3, CellState.DEFAULT, Checker.WHITE),
                                 new Cell(1, 1, CellState.DEFAULT, null)
                         ).toString(), e.getReason())
+        );
+    }
+    
+    
+    @Test
+    void testApplyCurrentMove() throws CheckersException {
+        List<FullCellDto> board = List.of(
+                new FullCellDto(1, 1, CellState.DEFAULT, Checker.WHITE),
+                new FullCellDto(2, 2, CellState.DEFAULT, Checker.BLACK),
+                new FullCellDto(3, 5, CellState.DEFAULT, Checker.WHITE),
+                new FullCellDto(4, 2, CellState.DEFAULT, Checker.BLACK),
+                new FullCellDto(4, 4, CellState.DEFAULT, Checker.BLACK)
+        );
+        String gameId = gameService.createGame(new CreateGameRequest(board, null)).getId();
+        gameService.makeStep(gameId, new StepDto(new CellDto(1, 1), new CellDto(3, 3)));
+        gameService.makeStep(gameId, new StepDto(new CellDto(3, 3), new CellDto(5, 1)));
+        
+        Set<FullCellDto> expectedChangedCells = Set.of(
+                new FullCellDto(2, 2, CellState.DEFAULT, null),
+                new FullCellDto(4, 2, CellState.DEFAULT, null)
+        );
+        List<SituationEntryDto> expectedSituation = List.of(
+                new SituationEntryDto(new CellDto(4, 4), List.of(
+                        new PossibleMoveDto(new CellDto(2, 6), new CellDto(3, 5), CellState.MUST_BE_FILLED)
+                ))
+        );
+        
+        ApplyCurrentMoveResponse response = gameService.applyCurrentMove(gameId);
+        
+        assertAll(
+                () -> assertEquals(expectedChangedCells, Set.copyOf(response.getChangedCells()), "changed cells"),
+                () -> assertEquals(expectedSituation, response.getSituation(), "situation"),
+                () -> assertEquals(Status.RUNNING, response.getStatus(), "status"),
+                () -> assertEquals(Team.BLACK, response.getWhoseTurn(), "whose turn"),
+                () -> assertEquals("b2:d4:b6", response.getLastMove(), "last move")
+        );
+    }
+    
+    
+    @Test
+    void testApplyCurrentMoveAndWin() throws CheckersException {
+        List<FullCellDto> board = List.of(
+                new FullCellDto(1, 1, CellState.DEFAULT, Checker.WHITE),
+                new FullCellDto(2, 2, CellState.DEFAULT, Checker.BLACK),
+                new FullCellDto(4, 2, CellState.DEFAULT, Checker.BLACK)
+        );
+        String gameId = gameService.createGame(new CreateGameRequest(board, null)).getId();
+        gameService.makeStep(gameId, new StepDto(new CellDto(1, 1), new CellDto(3, 3)));
+        gameService.makeStep(gameId, new StepDto(new CellDto(3, 3), new CellDto(5, 1)));
+        
+        Set<FullCellDto> expectedChangedCells = Set.of(
+                new FullCellDto(2, 2, CellState.DEFAULT, null),
+                new FullCellDto(4, 2, CellState.DEFAULT, null)
+        );
+        
+        ApplyCurrentMoveResponse response = gameService.applyCurrentMove(gameId);
+        
+        assertAll(
+                () -> assertEquals(expectedChangedCells, Set.copyOf(response.getChangedCells()), "changed cells"),
+                () -> assertEquals(0, response.getSituation().size(), "situation size"),
+                () -> assertEquals(Status.OVER, response.getStatus(), "status"),
+                () -> assertEquals(Team.WHITE, response.getWhoseTurn(), "whose turn"),
+                () -> assertEquals("b2:d4:b6", response.getLastMove(), "last move")
+        );
+    }
+    
+    
+    @Test
+    void testApplyCurrentMoveNotFinished() throws CheckersException {
+        List<FullCellDto> board = List.of(
+                new FullCellDto(1, 1, CellState.DEFAULT, Checker.WHITE),
+                new FullCellDto(2, 2, CellState.DEFAULT, Checker.BLACK),
+                new FullCellDto(4, 2, CellState.DEFAULT, Checker.BLACK)
+        );
+        String gameId = gameService.createGame(new CreateGameRequest(board, null)).getId();
+        gameService.makeStep(gameId, new StepDto(new CellDto(1, 1), new CellDto(3, 3)));
+        
+        CheckersException e = assertThrows(CheckersException.class, () -> gameService.applyCurrentMove(gameId));
+        
+        assertAll(
+                () -> assertEquals(MOVE_NOT_FINISHED, e.getErrorCode()),
+                () -> assertNull(e.getReason())
+        );
+    }
+    
+    
+    @Test
+    void testApplyCurrentMoveGameOver() throws CheckersException {
+        List<FullCellDto> board = List.of(
+                new FullCellDto(1, 1, CellState.DEFAULT, Checker.WHITE),
+                new FullCellDto(2, 2, CellState.DEFAULT, Checker.BLACK),
+                new FullCellDto(4, 2, CellState.DEFAULT, Checker.BLACK)
+        );
+        String gameId = gameService.createGame(new CreateGameRequest(board, null)).getId();
+        gameService.makeStep(gameId, new StepDto(new CellDto(1, 1), new CellDto(3, 3)));
+        gameService.makeStep(gameId, new StepDto(new CellDto(3, 3), new CellDto(5, 1)));
+        gameService.surrender(gameId, new ChangeStatusRequest(Status.OVER));
+    
+        CheckersException e = assertThrows(CheckersException.class, () -> gameService.applyCurrentMove(gameId));
+    
+        assertAll(
+                () -> assertEquals(GAME_OVER, e.getErrorCode()),
+                () -> assertNull(e.getReason())
         );
     }
 }
