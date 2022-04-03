@@ -743,4 +743,334 @@ public class TestGameService {
                 () -> assertNull(e.getReason())
         );
     }
+    
+    
+    @Test
+    void testMakeStepSilent() throws CheckersException {
+        List<FullCellDto> board = List.of(
+                new FullCellDto(1, 1, CellState.DEFAULT, Checker.WHITE),
+                new FullCellDto(3, 3, CellState.DEFAULT, Checker.BLACK)
+        );
+        String gameId = gameService.createGame(new CreateGameRequest(board, null)).getId();
+        
+        Set<FullCellDto> expectedChangedCells = Set.of(
+                new FullCellDto(1, 1, CellState.DEFAULT, null),
+                new FullCellDto(2, 0, CellState.DEFAULT, Checker.WHITE),
+                new FullCellDto(2, 2, CellState.DEFAULT, null)
+        );
+        
+        EditStateResponse response = assertDoesNotThrow(() ->
+                gameService.makeStep(gameId, new StepDto(new CellDto(1, 1), new CellDto(2, 0))));
+        
+        assertAll(
+                () -> assertEquals(expectedChangedCells, Set.copyOf(response.getChangedCells()), "changed cells"),
+                () -> assertEquals(0, response.getSituation().size(), "situation size"),
+                () -> assertEquals(Status.RUNNING, response.getStatus(), "status"),
+                () -> assertEquals(Team.WHITE, response.getWhoseTurn(), "whose turn")
+        );
+    }
+    
+    
+    @Test
+    void testMakeStepKill() throws CheckersException {
+        List<FullCellDto> board = List.of(
+                new FullCellDto(1, 1, CellState.DEFAULT, Checker.WHITE),
+                new FullCellDto(2, 2, CellState.DEFAULT, Checker.BLACK)
+        );
+        String gameId = gameService.createGame(new CreateGameRequest(board, null)).getId();
+        
+        Set<FullCellDto> expectedChangedCells = Set.of(
+                new FullCellDto(1, 1, CellState.DEFAULT, null),
+                new FullCellDto(2, 2, CellState.KILLED, Checker.BLACK),
+                new FullCellDto(3, 3, CellState.DEFAULT, Checker.WHITE)
+        );
+        
+        EditStateResponse response = assertDoesNotThrow(() ->
+                gameService.makeStep(gameId, new StepDto(new CellDto(1, 1), new CellDto(3, 3))));
+        
+        assertAll(
+                () -> assertEquals(expectedChangedCells, Set.copyOf(response.getChangedCells()), "changed cells"),
+                () -> assertEquals(0, response.getSituation().size(), "situation size"),
+                () -> assertEquals(Status.RUNNING, response.getStatus(), "status"),
+                () -> assertEquals(Team.WHITE, response.getWhoseTurn(), "whose turn")
+        );
+    }
+    
+    
+    @Test
+    void testMakeStepKillBackwards() throws CheckersException {
+        List<FullCellDto> board = List.of(
+                new FullCellDto(1, 1, CellState.DEFAULT, Checker.BLACK_KING),
+                new FullCellDto(2, 2, CellState.DEFAULT, Checker.WHITE)
+        );
+        String gameId = gameService.createGame(new CreateGameRequest(board, null)).getId();
+        
+        Set<FullCellDto> expectedChangedCells = Set.of(
+                new FullCellDto(0, 0, CellState.DEFAULT, Checker.WHITE),
+                new FullCellDto(1, 1, CellState.KILLED, Checker.BLACK_KING),
+                new FullCellDto(2, 2, CellState.DEFAULT, null)
+        );
+        
+        EditStateResponse response = assertDoesNotThrow(() ->
+                gameService.makeStep(gameId, new StepDto(new CellDto(2, 2), new CellDto(0, 0))));
+        
+        assertAll(
+                () -> assertEquals(expectedChangedCells, Set.copyOf(response.getChangedCells()), "changed cells"),
+                () -> assertEquals(0, response.getSituation().size(), "situation size"),
+                () -> assertEquals(Status.RUNNING, response.getStatus(), "status"),
+                () -> assertEquals(Team.WHITE, response.getWhoseTurn(), "whose turn")
+        );
+    }
+    
+    
+    @Test
+    void testMakeStepKillCanContinue() throws CheckersException {
+        List<FullCellDto> board = List.of(
+                new FullCellDto(0, 0, CellState.DEFAULT, Checker.WHITE),
+                new FullCellDto(1, 1, CellState.DEFAULT, Checker.BLACK),
+                new FullCellDto(3, 1, CellState.DEFAULT, Checker.BLACK)
+        );
+        String gameId = gameService.createGame(new CreateGameRequest(board, null)).getId();
+        
+        Set<FullCellDto> expectedChangedCells = Set.of(
+                new FullCellDto(0, 0, CellState.DEFAULT, null),
+                new FullCellDto(1, 1, CellState.KILLED, Checker.BLACK),
+                new FullCellDto(2, 2, CellState.PROMPT, Checker.WHITE),
+                new FullCellDto(4, 0, CellState.MUST_BE_FILLED, null)
+        );
+        List<SituationEntryDto> expectedSituation = List.of(
+                new SituationEntryDto(new CellDto(2, 2), List.of(
+                        new PossibleMoveDto(new CellDto(4, 0), new CellDto(3, 1), CellState.MUST_BE_FILLED)
+                ))
+        );
+        
+        EditStateResponse response = assertDoesNotThrow(() ->
+                gameService.makeStep(gameId, new StepDto(new CellDto(0, 0), new CellDto(2, 2))));
+        
+        assertAll(
+                () -> assertEquals(expectedChangedCells, Set.copyOf(response.getChangedCells()), "changed cells"),
+                () -> assertEquals(expectedSituation, response.getSituation(), "situation"),
+                () -> assertEquals(Status.RUNNING, response.getStatus(), "status"),
+                () -> assertEquals(Team.WHITE, response.getWhoseTurn(), "whose turn")
+        );
+    }
+    
+    
+    @Test
+    void testMakeStepKillContinued() throws CheckersException {
+        List<FullCellDto> board = List.of(
+                new FullCellDto(0, 0, CellState.DEFAULT, Checker.WHITE),
+                new FullCellDto(1, 1, CellState.DEFAULT, Checker.BLACK),
+                new FullCellDto(3, 1, CellState.DEFAULT, Checker.BLACK)
+        );
+        String gameId = gameService.createGame(new CreateGameRequest(board, null)).getId();
+        
+        Set<FullCellDto> expectedChangedCells = Set.of(
+                new FullCellDto(2, 2, CellState.DEFAULT, null),
+                new FullCellDto(3, 1, CellState.KILLED, Checker.BLACK),
+                new FullCellDto(4, 0, CellState.DEFAULT, Checker.WHITE)
+        );
+        
+        assertDoesNotThrow(() ->
+                gameService.makeStep(gameId, new StepDto(new CellDto(0, 0), new CellDto(2, 2))));
+        EditStateResponse response = assertDoesNotThrow(() ->
+                gameService.makeStep(gameId, new StepDto(new CellDto(2, 2), new CellDto(4, 0))));
+        
+        assertAll(
+                () -> assertEquals(expectedChangedCells, Set.copyOf(response.getChangedCells()), "changed cells"),
+                () -> assertEquals(0, response.getSituation().size(), "situation size"),
+                () -> assertEquals(Status.RUNNING, response.getStatus(), "status"),
+                () -> assertEquals(Team.WHITE, response.getWhoseTurn(), "whose turn")
+        );
+    }
+    
+    
+    @Test
+    void testMakeStepSilentBecomeKing() throws CheckersException {
+        List<FullCellDto> board = List.of(
+                new FullCellDto(6, 0, CellState.DEFAULT, Checker.WHITE),
+                new FullCellDto(3, 3, CellState.DEFAULT, Checker.BLACK)
+        );
+        String gameId = gameService.createGame(new CreateGameRequest(board, null)).getId();
+        
+        Set<FullCellDto> expectedChangedCells = Set.of(
+                new FullCellDto(6, 0, CellState.DEFAULT, null),
+                new FullCellDto(7, 1, CellState.DEFAULT, Checker.WHITE_KING)
+        );
+        
+        EditStateResponse response = assertDoesNotThrow(() ->
+                gameService.makeStep(gameId, new StepDto(new CellDto(6, 0), new CellDto(7, 1))));
+        
+        assertAll(
+                () -> assertEquals(expectedChangedCells, Set.copyOf(response.getChangedCells()), "changed cells"),
+                () -> assertEquals(0, response.getSituation().size(), "situation size"),
+                () -> assertEquals(Status.RUNNING, response.getStatus(), "status"),
+                () -> assertEquals(Team.WHITE, response.getWhoseTurn(), "whose turn")
+        );
+    }
+    
+    
+    @Test
+    void testMakeStepKillBecomeKing() throws CheckersException {
+        List<FullCellDto> board = List.of(
+                new FullCellDto(5, 1, CellState.DEFAULT, Checker.WHITE),
+                new FullCellDto(6, 2, CellState.DEFAULT, Checker.BLACK)
+        );
+        String gameId = gameService.createGame(new CreateGameRequest(board, null)).getId();
+        
+        Set<FullCellDto> expectedChangedCells = Set.of(
+                new FullCellDto(5, 1, CellState.DEFAULT, null),
+                new FullCellDto(6, 2, CellState.KILLED, Checker.BLACK),
+                new FullCellDto(7, 3, CellState.DEFAULT, Checker.WHITE_KING)
+        );
+        
+        EditStateResponse response = assertDoesNotThrow(() ->
+                gameService.makeStep(gameId, new StepDto(new CellDto(5, 1), new CellDto(7, 3))));
+        
+        assertAll(
+                () -> assertEquals(expectedChangedCells, Set.copyOf(response.getChangedCells()), "changed cells"),
+                () -> assertEquals(0, response.getSituation().size(), "situation size"),
+                () -> assertEquals(Status.RUNNING, response.getStatus(), "status"),
+                () -> assertEquals(Team.WHITE, response.getWhoseTurn(), "whose turn")
+        );
+    }
+    
+    
+    @Test
+    void testMakeStepKillBecomeKingCanContinue() throws CheckersException {
+        List<FullCellDto> board = List.of(
+                new FullCellDto(5, 1, CellState.DEFAULT, Checker.WHITE),
+                new FullCellDto(6, 2, CellState.DEFAULT, Checker.BLACK),
+                new FullCellDto(5, 5, CellState.DEFAULT, Checker.BLACK)
+        );
+        String gameId = gameService.createGame(new CreateGameRequest(board, null)).getId();
+        
+        Set<FullCellDto> expectedChangedCells = Set.of(
+                new FullCellDto(3, 7, CellState.MUST_BE_FILLED, null),
+                new FullCellDto(4, 6, CellState.MUST_BE_FILLED, null),
+                new FullCellDto(5, 1, CellState.DEFAULT, null),
+                new FullCellDto(6, 2, CellState.KILLED, Checker.BLACK),
+                new FullCellDto(7, 3, CellState.PROMPT, Checker.WHITE_KING)
+        );
+        Set<PossibleMoveDto> expectedSituationMovesFrom73 = Set.of(
+                new PossibleMoveDto(new CellDto(3, 7), new CellDto(5, 5), CellState.MUST_BE_FILLED),
+                new PossibleMoveDto(new CellDto(4, 6), new CellDto(5, 5), CellState.MUST_BE_FILLED)
+        );
+        
+        EditStateResponse response = assertDoesNotThrow(() ->
+                gameService.makeStep(gameId, new StepDto(new CellDto(5, 1), new CellDto(7, 3))));
+        List<SituationEntryDto> responseSituation = response.getSituation();
+        
+        assertAll(
+                () -> assertEquals(expectedChangedCells, Set.copyOf(response.getChangedCells()), "changed cells"),
+                () -> assertEquals(1, responseSituation.size(), "situation size"),
+                () -> assertEquals(new CellDto(7, 3), responseSituation.get(0).getFrom(), "situation from"),
+                () -> assertEquals(expectedSituationMovesFrom73, Set.copyOf(responseSituation.get(0).getMoves()),
+                        "situation moves from (7; 3)"),
+                () -> assertEquals(Status.RUNNING, response.getStatus(), "status"),
+                () -> assertEquals(Team.WHITE, response.getWhoseTurn(), "whose turn")
+        );
+    }
+    
+    
+    @Test
+    void testMakeStepKillBecomeKingContinued() throws CheckersException {
+        List<FullCellDto> board = List.of(
+                new FullCellDto(5, 1, CellState.DEFAULT, Checker.WHITE),
+                new FullCellDto(6, 2, CellState.DEFAULT, Checker.BLACK),
+                new FullCellDto(5, 5, CellState.DEFAULT, Checker.BLACK)
+        );
+        String gameId = gameService.createGame(new CreateGameRequest(board, null)).getId();
+        
+        Set<FullCellDto> expectedChangedCells = Set.of(
+                new FullCellDto(3, 7, CellState.DEFAULT, Checker.WHITE_KING),
+                new FullCellDto(4, 6, CellState.DEFAULT, null),
+                new FullCellDto(5, 5, CellState.KILLED, Checker.BLACK),
+                new FullCellDto(7, 3, CellState.DEFAULT, null)
+        );
+        
+        assertDoesNotThrow(() ->
+                gameService.makeStep(gameId, new StepDto(new CellDto(5, 1), new CellDto(7, 3))));
+        EditStateResponse response = assertDoesNotThrow(() ->
+                gameService.makeStep(gameId, new StepDto(new CellDto(7, 3), new CellDto(3, 7))));
+        
+        assertAll(
+                () -> assertEquals(expectedChangedCells, Set.copyOf(response.getChangedCells()), "changed cells"),
+                () -> assertEquals(0, response.getSituation().size(), "situation size"),
+                () -> assertEquals(Status.RUNNING, response.getStatus(), "status"),
+                () -> assertEquals(Team.WHITE, response.getWhoseTurn(), "whose turn")
+        );
+    }
+    
+    
+    @Test
+    void testMakeStepGameOver() throws CheckersException {
+        List<FullCellDto> board = List.of(
+                new FullCellDto(1, 1, CellState.DEFAULT, Checker.WHITE),
+                new FullCellDto(2, 2, CellState.DEFAULT, Checker.BLACK)
+        );
+        String gameId = gameService.createGame(new CreateGameRequest(board, null)).getId();
+        gameService.surrender(gameId, new ChangeStatusRequest(Status.OVER));
+        
+        CheckersException e = assertThrows(CheckersException.class, () ->
+                gameService.makeStep(gameId, new StepDto(new CellDto(2, 2), new CellDto(0, 0))));
+        
+        assertAll(
+                () -> assertEquals(GAME_OVER, e.getErrorCode()),
+                () -> assertNull(e.getReason())
+        );
+    }
+    
+    
+    @Test
+    void testMakeStepImpossibleStep() throws CheckersException {
+        List<FullCellDto> board = List.of(
+                new FullCellDto(1, 1, CellState.DEFAULT, Checker.WHITE),
+                new FullCellDto(2, 2, CellState.DEFAULT, Checker.BLACK)
+        );
+        String gameId = gameService.createGame(new CreateGameRequest(board, null)).getId();
+        
+        CheckersException e = assertThrows(CheckersException.class, () ->
+                gameService.makeStep(gameId, new StepDto(new CellDto(1, 1), new CellDto(2, 0))));
+        
+        assertAll(
+                () -> assertEquals(IMPOSSIBLE_STEP, e.getErrorCode()),
+                () -> assertEquals(
+                        new Step(
+                                new Cell(1, 1, CellState.PROMPT, Checker.WHITE),
+                                new Cell(2, 0, CellState.DEFAULT, null)
+                        ).toString(), e.getReason())
+        );
+    }
+    
+    
+    @Test
+    void testMakeStepImpossibleStepDoubleKillAttempt() throws CheckersException {
+        List<FullCellDto> board = List.of(
+                new FullCellDto(1, 1, CellState.DEFAULT, Checker.WHITE),
+                new FullCellDto(2, 2, CellState.DEFAULT, Checker.BLACK),
+                new FullCellDto(2, 4, CellState.DEFAULT, Checker.BLACK),
+                new FullCellDto(2, 6, CellState.DEFAULT, Checker.BLACK),
+                new FullCellDto(4, 4, CellState.DEFAULT, Checker.BLACK),
+                new FullCellDto(4, 6, CellState.DEFAULT, Checker.BLACK)
+        );
+        String gameId = gameService.createGame(new CreateGameRequest(board, null)).getId();
+        
+        gameService.makeStep(gameId, new StepDto(new CellDto(1, 1), new CellDto(3, 3)));
+        gameService.makeStep(gameId, new StepDto(new CellDto(3, 3), new CellDto(1, 5)));
+        gameService.makeStep(gameId, new StepDto(new CellDto(1, 5), new CellDto(3, 7)));
+        gameService.makeStep(gameId, new StepDto(new CellDto(3, 7), new CellDto(5, 5)));
+        gameService.makeStep(gameId, new StepDto(new CellDto(5, 5), new CellDto(3, 3)));
+        CheckersException e = assertThrows(CheckersException.class, () ->
+                gameService.makeStep(gameId, new StepDto(new CellDto(3, 3), new CellDto(1, 1))));
+        
+        assertAll(
+                () -> assertEquals(IMPOSSIBLE_STEP, e.getErrorCode()),
+                () -> assertEquals(
+                        new Step(
+                                new Cell(3, 3, CellState.DEFAULT, Checker.WHITE),
+                                new Cell(1, 1, CellState.DEFAULT, null)
+                        ).toString(), e.getReason())
+        );
+    }
 }

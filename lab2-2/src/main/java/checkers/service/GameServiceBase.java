@@ -281,9 +281,6 @@ public class GameServiceBase {
         if (!game.getSituation().get(from).contains(new PossibleMove(to, null, null)))
             throw new CheckersException(IMPOSSIBLE_STEP, step.toString());
         
-        if (game.getWhoseTurn() != from.getChecker().getTeam())
-            throw new CheckersException(OTHER_TEAMS_TURN, step.toString());
-        
         if (toState == CellState.CAN_BE_FILLED) {
             changedCells.addAll(togglePromptMode(from, game));
             moveChecker(from, to, game);

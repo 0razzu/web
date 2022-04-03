@@ -115,10 +115,6 @@ const defaultErrorHandler = e => {
                 writeToErrorField('Нет такой клетки')
                 break
             }
-            case 'OTHER_TEAMS_TURN': {
-                writeToErrorField('Сейчас ход другой команды')
-                break
-            }
             case 'IMPOSSIBLE_STEP': {
                 writeToErrorField('Невозможный ход')
                 break
