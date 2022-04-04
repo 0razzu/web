@@ -1245,6 +1245,41 @@ public class TestGameService {
     
     
     @Test
+    void testCancelCurrentMoveHasBecomeKing() throws CheckersException {
+        List<FullCellDto> board = List.of(
+                new FullCellDto(5, 1, CellState.DEFAULT, Checker.WHITE),
+                new FullCellDto(6, 2, CellState.DEFAULT, Checker.BLACK),
+                new FullCellDto(6, 4, CellState.DEFAULT, Checker.BLACK)
+        );
+        String gameId = gameService.createGame(new CreateGameRequest(board, null)).getId();
+        gameService.makeStep(gameId, new StepDto(new CellDto(5, 1), new CellDto(7, 3)));
+        gameService.makeStep(gameId, new StepDto(new CellDto(7, 3), new CellDto(5, 5)));
+    
+        Set<FullCellDto> expectedChangedCells = Set.of(
+                new FullCellDto(5, 1, CellState.DEFAULT, Checker.WHITE),
+                new FullCellDto(6, 2, CellState.DEFAULT, Checker.BLACK),
+                new FullCellDto(7, 3, CellState.DEFAULT, null),
+                new FullCellDto(6, 4, CellState.DEFAULT, Checker.BLACK),
+                new FullCellDto(5, 5, CellState.DEFAULT, null)
+        );
+        List<SituationEntryDto> expectedSituation = List.of(
+                new SituationEntryDto(new CellDto(5, 1), List.of(
+                        new PossibleMoveDto(new CellDto(7, 3), new CellDto(6, 2), CellState.MUST_BE_FILLED)
+                ))
+        );
+    
+        EditStateResponse response = gameService.cancelCurrentMove(gameId);
+    
+        assertAll(
+                () -> assertEquals(expectedChangedCells, Set.copyOf(response.getChangedCells()), "changed cells"),
+                () -> assertEquals(expectedSituation, response.getSituation(), "situation"),
+                () -> assertEquals(Status.RUNNING, response.getStatus(), "status"),
+                () -> assertEquals(Team.WHITE, response.getWhoseTurn(), "whose turn")
+        );
+    }
+    
+    
+    @Test
     void testCancelCurrentMoveGameOver() throws CheckersException {
         List<FullCellDto> board = List.of(
                 new FullCellDto(1, 1, CellState.DEFAULT, Checker.WHITE),
