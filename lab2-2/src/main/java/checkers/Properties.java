@@ -9,6 +9,6 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @Getter
 public class Properties {
-    @Value("#{${moveTime}?: 120}")
+    @Value("${moveTime}")
     private int moveTime;
 }

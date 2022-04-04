@@ -6,11 +6,14 @@ spring:
     resources:
       static-locations:
         - classpath:/static/
+
   jackson:
     default-property-inclusion: non_null
 
 server:
   servlet:
-    context-path: /${path}
+    context-path: /
 
-  port: ${port}
+  port: 8080
+
+moveTime: 120
